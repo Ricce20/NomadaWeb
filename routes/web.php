@@ -6,7 +6,7 @@ use Laravel\Fortify\Features;
 
 Route::get('/', function () {
     return view('landing-page');
-});
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -15,3 +15,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
