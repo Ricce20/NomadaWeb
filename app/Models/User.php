@@ -13,6 +13,12 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    // Tipos de usuario
+    const TYPE_SUPER_ADMIN = 'super_admin';
+    const TYPE_OWNER = 'owner';
+    const TYPE_MANAGER = 'manager';
+    const TYPE_WAREHOUSEMAN = 'warehouse_man';
+    const TYPE_DRIVER = 'driver';
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +28,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'username',
+        'phone',
+        'type',
     ];
 
     /**
@@ -49,4 +58,35 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    /**
+     * Verificar si es de un tipo específico
+     */
+    public function isType(string $type): bool
+    {
+        return $this->type === $type;
+    }
+
+    /**
+     * Obtener ruta de redirección según el tipo
+     */
+    public function getDashboardRouteName(): string
+    {
+        return match($this->type) {
+            self::TYPE_SUPER_ADMIN => 'management',
+            self::TYPE_OWNER => 'ownership.dashboard',
+            self::TYPE_MANAGER => 'management.dashboard',
+            self::TYPE_WAREHOUSEMAN => 'warehouse.dashboard',
+            default => 'dashboard',
+        };
+    }
+
+    /**
+     * Helpers rápidos
+     */
+    public function isSuperAdmin(): bool { return $this->type === self::TYPE_SUPER_ADMIN; }
+    public function isOwner(): bool { return $this->type === self::TYPE_OWNER; }
+    public function isAdmin(): bool { return $this->type === self::TYPE_MANAGER; }
+    public function isAlmacenista(): bool { return $this->type === self::TYPE_WAREHOUSEMAN; }
+    public function isConductor(): bool { return $this->type === self::TYPE_DRIVER; }
 }

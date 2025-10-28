@@ -13,8 +13,8 @@ import AuthLayout from '@/layouts/auth-layout';
 export default function Register() {
     return (
         <AuthLayout
-            title="Create an account"
-            description="Enter your details below to create your account"
+            title="Crear una cuenta"
+            description="Ingresa tus datos para crear una cuenta nueva"
         >
             <Head title="Register" />
             <Form
@@ -27,7 +27,7 @@ export default function Register() {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">Nombre completo</Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -36,8 +36,9 @@ export default function Register() {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Full name"
+                                    placeholder="Ingregsa tu nombre completo"
                                 />
+                                <p className='text-xs'>Ej: Jose Ramirez Perez</p>
                                 <InputError
                                     message={errors.name}
                                     className="mt-2"
@@ -45,7 +46,26 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="phone">Telefono</Label>
+                                <Input
+                                    id="phone"
+                                    type="tel"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    autoComplete="phone"
+                                    name="phone"
+                                    placeholder="Numero de telefono"
+                                />
+                                <p className='text-xs'>Ej: 3328650277</p>
+                                <InputError
+                                    message={errors.phone}
+                                    className="mt-2"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Correo electronico</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -53,13 +73,15 @@ export default function Register() {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
-                                    placeholder="email@example.com"
+                                    placeholder="Correo electronico"
                                 />
+                                <p className='text-xs'>Ej: tucorreo@gmail.com</p>
+
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">Contraseña</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -67,14 +89,18 @@ export default function Register() {
                                     tabIndex={3}
                                     autoComplete="new-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder="Crea una contraseña segura"
                                 />
+                                <p className='text-xs'>
+                                    Mínimo 8 caracteres. Incluye mayúsculas, minúsculas y números
+                                </p>
+
                                 <InputError message={errors.password} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                    Confirma tu contraseña
                                 </Label>
                                 <Input
                                     id="password_confirmation"
@@ -83,7 +109,7 @@ export default function Register() {
                                     tabIndex={4}
                                     autoComplete="new-password"
                                     name="password_confirmation"
-                                    placeholder="Confirm password"
+                                    placeholder="Confirma tu contraseña"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -97,14 +123,14 @@ export default function Register() {
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
+                                Crear cuenta
                             </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
+                            Ya tienes una cuenta con nosotros?{' '}
+                            <TextLink href={login()} tabIndex={6} className='text-orange-400'>
+                                Incia sesión aqui
                             </TextLink>
                         </div>
                     </>

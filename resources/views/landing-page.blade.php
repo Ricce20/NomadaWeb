@@ -32,8 +32,8 @@
             </nav>
             
             <div class="flex items-center space-x-4">
-                <a href="/login"  class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors">Iniciar Sesión</a>
-                <a href="/register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors">Prueba Gratis</a>
+                <a href="login"  class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors">Iniciar Sesión</a>
+                <a href="register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors">Registrate</a>
             </div>
             
             <button class="md:hidden text-xl">
@@ -48,10 +48,6 @@
             <div class="md:w-1/2 mb-10 md:mb-0">
                 <h2 class="text-4xl md:text-5xl font-bold mb-6">Gestiona tu negocio de forma inteligente</h2>
                 <p class="text-xl mb-8 text-gray-300">Nómada es la solución integral para la gestión de pedidos, inventarios y logística de tu empresa.</p>
-                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                    <button class="px-6 py-3 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors font-medium">Comenzar Ahora</button>
-                    <button class="px-6 py-3 border border-[#FC6F20] text-[#FC6F20] rounded-md hover:bg-[#FC6F20] hover:text-white transition-colors font-medium">Ver Demo</button>
-                </div>
             </div>
             <div class="md:w-1/2 flex justify-center">
                 <div class="bg-[#323232] p-6 rounded-xl shadow-2xl max-w-md">
@@ -349,8 +345,7 @@
             <h2 class="text-3xl font-bold mb-4">¿Listo para optimizar tu negocio?</h2>
             <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Comienza hoy con una prueba gratuita de 14 días. Sin compromisos, sin tarjeta de crédito.</p>
             <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <button class="px-8 py-3 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors font-medium text-lg">Comenzar Prueba Gratuita</button>
-                <button class="px-8 py-3 border border-[#FC6F20] text-[#FC6F20] rounded-md hover:bg-[#FC6F20] hover:text-white transition-colors font-medium text-lg">Solicitar Demo Personalizado</button>
+                <a href="register"   class="px-8 py-3 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors font-medium text-lg">Registrate ahora</a>
             </div>
         </div>
     </section>

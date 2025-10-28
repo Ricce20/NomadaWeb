@@ -62,74 +62,76 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    /* Light Mode con tu paleta */
+    --background: #FEE8D0; /* Fondo crema */
+    --foreground: #1B1B1B; /* Texto principal oscuro */
+    --card: #FEE8D0; /* Fondo de tarjetas crema */
+    --card-foreground: #1B1B1B; /* Texto en tarjetas oscuro */
+    --popover: #FEE8D0; /* Fondo de popovers crema */
+    --popover-foreground: #1B1B1B; /* Texto en popovers oscuro */
+    --primary: #FC6F20; /* Color primario naranja */
+    --primary-foreground: #FFFFFF; /* Texto sobre primario blanco */
+    --secondary: #FEE8D0; /* Secundario crema */
+    --secondary-foreground: #1B1B1B; /* Texto sobre secundario oscuro */
+    --muted: #FEE8D0; /* Elementos muted crema */
+    --muted-foreground: #323232; /* Texto muted gris */
+    --accent: #FC6F20; /* Acento naranja */
+    --accent-foreground: #FFFFFF; /* Texto sobre acento blanco */
+    --destructive: #DC2626; /* Destructivo rojo (mantenido para consistencia) */
+    --destructive-foreground: #FFFFFF; /* Texto sobre destructivo blanco */
+    --border: #E5D5C3; /* Borde más claro para contraste */
+    --input: #FFFFFF; /* Inputs blancos */
+    --ring: #FC6F20; /* Anillo de focus naranja */
+    --chart-1: #FC6F20; /* Chart 1 naranja */
+    --chart-2: #1B1B1B; /* Chart 2 oscuro */
+    --chart-3: #323232; /* Chart 3 gris */
+    --chart-4: #FEE8D0; /* Chart 4 crema */
+    --chart-5: #E5D5C3; /* Chart 5 crema claro */
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: #FEE8D0; /* Sidebar crema */
+    --sidebar-foreground: #1B1B1B; /* Texto sidebar oscuro */
+    --sidebar-primary: #FC6F20; /* Primario sidebar naranja */
+    --sidebar-primary-foreground: #FFFFFF; /* Texto sobre primario sidebar blanco */
+    --sidebar-accent: #FEE8D0; /* Acento sidebar crema */
+    --sidebar-accent-foreground: #1B1B1B; /* Texto sobre acento sidebar oscuro */
+    --sidebar-border: #E5D5C3; /* Borde sidebar crema claro */
+    --sidebar-ring: #FC6F20; /* Anillo sidebar naranja */
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Dark Mode con tu paleta */
+    --background: #1B1B1B; /* Fondo oscuro */
+    --foreground: #FEE8D0; /* Texto principal crema */
+    --card: #1B1B1B; /* Fondo de tarjetas oscuro */
+    --card-foreground: #FEE8D0; /* Texto en tarjetas crema */
+    --popover: #1B1B1B; /* Fondo de popovers oscuro */
+    --popover-foreground: #FEE8D0; /* Texto en popovers crema */
+    --primary: #FC6F20; /* Color primario naranja */
+    --primary-foreground: #FFFFFF; /* Texto sobre primario blanco */
+    --secondary: #323232; /* Secundario gris oscuro */
+    --secondary-foreground: #FEE8D0; /* Texto sobre secundario crema */
+    --muted: #323232; /* Elementos muted gris oscuro */
+    --muted-foreground: #A8A8A8; /* Texto muted gris claro */
+    --accent: #FC6F20; /* Acento naranja */
+    --accent-foreground: #FFFFFF; /* Texto sobre acento blanco */
+    --destructive: #DC2626; /* Destructivo rojo */
+    --destructive-foreground: #FFFFFF; /* Texto sobre destructivo blanco */
+    --border: #323232; /* Borde gris oscuro */
+    --input: #323232; /* Inputs gris oscuro */
+    --ring: #FC6F20; /* Anillo de focus naranja */
+    --chart-1: #FC6F20; /* Chart 1 naranja */
+    --chart-2: #FEE8D0; /* Chart 2 crema */
+    --chart-3: #323232; /* Chart 3 gris */
+    --chart-4: #1B1B1B; /* Chart 4 oscuro */
+    --chart-5: #444444; /* Chart 5 gris medio */
+    --sidebar: #1B1B1B; /* Sidebar oscuro */
+    --sidebar-foreground: #FEE8D0; /* Texto sidebar crema */
+    --sidebar-primary: #FC6F20; /* Primario sidebar naranja */
+    --sidebar-primary-foreground: #FFFFFF; /* Texto sobre primario sidebar blanco */
+    --sidebar-accent: #323232; /* Acento sidebar gris oscuro */
+    --sidebar-accent-foreground: #FEE8D0; /* Texto sobre acento sidebar crema */
+    --sidebar-border: #323232; /* Borde sidebar gris oscuro */
+    --sidebar-ring: #FC6F20; /* Anillo sidebar naranja */
 }
 
 @layer base {
@@ -139,5 +141,6 @@
 
     body {
         @apply bg-background text-foreground;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
 }
