@@ -24,6 +24,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
         router.flushAll();
     };
 
+    const isAdminOrOwner = user.type === 'super_admin' || user.type === 'owner';
     return (
         <>
             <DropdownMenuLabel className="p-0 font-normal">
@@ -32,33 +33,50 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {isAdminOrOwner ? (
+                <>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem asChild>
+                            <Link
+                                className="block w-full"
+                                href={edit()}
+                                as="button"
+                                prefetch
+                                onClick={cleanup}
+                            >
+                                <Settings className="mr-2" />
+                                Settings
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full"
+                            href={logout()}
+                            as="button"
+                            onClick={handleLogout}
+                            data-test="logout-button"
+                        >
+                            <LogOut className="mr-2" />
+                            Log out
+                        </Link>
+                    </DropdownMenuItem>
+                </>
+            ) : (
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full"
-                        href={edit()}
+                        href={logout()}
                         as="button"
-                        prefetch
-                        onClick={cleanup}
+                        onClick={handleLogout}
+                        data-test="logout-button"
                     >
-                        <Settings className="mr-2" />
-                        Settings
+                        <LogOut className="mr-2" />
+                        Log out
                     </Link>
                 </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link
-                    className="block w-full"
-                    href={logout()}
-                    as="button"
-                    onClick={handleLogout}
-                    data-test="logout-button"
-                >
-                    <LogOut className="mr-2" />
-                    Log out
-                </Link>
-            </DropdownMenuItem>
+            )}
         </>
     );
 }

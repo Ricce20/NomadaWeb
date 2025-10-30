@@ -30,10 +30,13 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
+export type UserType = 'super_admin' | 'owner' | 'driver' | 'warehouse_man' | 'manager';
+
 export interface User {
     id: number;
     name: string;
     email: string;
+    type: UserType;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

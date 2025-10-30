@@ -1,10 +1,12 @@
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
+import AppLayoutOwner from '@/layouts/app-layout-ownership';
+import AppLayoutManagement from '@/layouts/app-layout-management';
 import SettingsLayout from '@/layouts/settings/layout';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
@@ -23,9 +25,23 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const { auth } = usePage<SharedData>().props;
+    
+    // El tipo de usuario está definido en auth.user.type
+    const userType = auth.user.type;
+    
+    // Seleccionar el layout basado en el tipo de usuario
+    let Layout;
+    if (['owner', 'super_admin'].includes(userType)) {
+        Layout = AppLayoutOwner;
+    } else if (['manager', 'warehouse_man'].includes(userType)) {
+        Layout = AppLayoutManagement;
+    } else {
+        Layout = AppLayout; // Para 'driver' y cualquier otro tipo
+    }
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <Layout breadcrumbs={breadcrumbs}>
             <Head title="Password settings" />
 
             <SettingsLayout>
@@ -141,6 +157,6 @@ export default function Password() {
                     </Form>
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </Layout>
     );
 }

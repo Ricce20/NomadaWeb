@@ -5,23 +5,30 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
+
 
 interface LoginProps {
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    defaultLoginMethod?: boolean; // true = empleado, false = no empleado
 }
 
 export default function Login({
     status,
     canResetPassword,
     canRegister,
+    defaultLoginMethod = false,
 }: LoginProps) {
+    const [isEmployee, setIsEmployee] = useState<boolean>(defaultLoginMethod);
+
     return (
         <AuthLayout
             title="Inciaia sesión en tu cuenta"
@@ -37,34 +44,76 @@ export default function Login({
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Correo electrónico</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@gmail.com"
-                                />
-                                <p className='text-xs'>Ejemplo:email@gmail.com</p>
-                                <InputError message={errors.email} />
+                            <div className="grid gap-4">
+                                <div>
+                                    <Label>¿Eres empleado?</Label>
+                                    <RadioGroup
+                                        value={isEmployee ? 'yes' : 'no'}
+                                        onValueChange={(value: string) => setIsEmployee(value === 'yes')}
+                                        name="isEmployee"
+                                        className="mt-2 flex flex-row space-x-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="is-employee-yes" />
+                                            <Label htmlFor="is-employee-yes" className="cursor-pointer">
+                                                Sí
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="is-employee-no" />
+                                            <Label htmlFor="is-employee-no" className="cursor-pointer">
+                                                No
+                                            </Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                                {isEmployee ? (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="username">Nombre de usuario</Label>
+                                        <Input
+                                            id="username"
+                                            type="text"
+                                            name="username"
+                                            required
+                                            autoFocus
+                                            tabIndex={1}
+                                            autoComplete="username"
+                                            placeholder="Tu nombre de usuario"
+                                        />
+                                        <p className='text-xs'>Ingresa tu nombre de usuario asignado</p>
+                                        <InputError message={errors.username} />
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="email">Correo electrónico</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            name="email"
+                                            required
+                                            autoFocus
+                                            tabIndex={1}
+                                            autoComplete="email"
+                                            placeholder="email@gmail.com"
+                                        />
+                                        <p className='text-xs'>Ejemplo:email@gmail.com</p>
+                                        <InputError message={errors.email} />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Contraseña</Label>
-                                    {canResetPassword && (
+                                    {canResetPassword && !isEmployee && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
                                             tabIndex={5}
                                         >
-                                            ¿Olvidaste Tu contraseña?
+                                            ¿Olvidaste tu contraseña?
                                         </TextLink>
-                                    )} 
+                                    )}
                                 </div>
                                 <Input
                                     id="password"

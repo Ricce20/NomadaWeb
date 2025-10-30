@@ -27,7 +27,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required_without:username', 'string', 'email'],
+            'username' => ['required_without:email', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,14 +42,24 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        $credentials = $this->only('password');
+        
+        // Agregar el campo de autenticación (email o username)
+        if ($this->has('email')) {
+            $credentials['email'] = $this->get('email');
+        } else {
+            $credentials['username'] = $this->get('username');
+        }
+
         /** @var User|null $user */
-        $user = Auth::getProvider()->retrieveByCredentials($this->only('email', 'password'));
+        $user = Auth::getProvider()->retrieveByCredentials($credentials);
 
         if (! $user || ! Auth::getProvider()->validateCredentials($user, $this->only('password'))) {
             RateLimiter::hit($this->throttleKey());
 
+            $fieldWithError = $this->has('email') ? 'email' : 'username';
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                $fieldWithError => __('auth.failed'),
             ]);
         }
 
@@ -85,7 +96,9 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return $this->string('email')
+        $identifier = $this->has('email') ? $this->string('email') : $this->string('username');
+        
+        return $identifier
             ->lower()
             ->append('|'.$this->ip())
             ->transliterate()
