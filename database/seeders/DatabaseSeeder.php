@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        //user tipo super admin
         User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -22,6 +23,18 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('test@example.com'),
                 'email_verified_at' => now(),
                 'type' => User::TYPE_SUPER_ADMIN,
+            ]
+        );
+
+        //user tipo empleado(ya sea manager, warehouseman,etc)
+        User::firstOrCreate(
+            ['email' => 'employee@example.com'],
+            [
+                'name' => 'Test User employee',
+                'username' => 'employee',
+                'password' => Hash::make('employee@example.com'),
+                'email_verified_at' => now(),
+                'type' => User::TYPE_MANAGER,
             ]
         );
     }

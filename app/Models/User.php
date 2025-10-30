@@ -73,11 +73,14 @@ class User extends Authenticatable
     public function getDashboardRouteName(): string
     {
         return match($this->type) {
+            //manejan un layout unico
             self::TYPE_SUPER_ADMIN => 'management',
-            self::TYPE_OWNER => 'ownership.dashboard',
-            self::TYPE_MANAGER => 'management.dashboard',
-            self::TYPE_WAREHOUSEMAN => 'warehouse.dashboard',
-            default => 'dashboard',
+            self::TYPE_OWNER => 'ownership',
+            //comparten layout pero diferente seccion
+            self::TYPE_MANAGER => 'orders.index',
+            self::TYPE_WAREHOUSEMAN => 'warehouse.index',
+            //no tienen dashboard, van al login
+            default => 'login',
         };
     }
 

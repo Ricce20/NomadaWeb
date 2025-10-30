@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import AppLayoutOwner from '@/layouts/app-layout-ownership';
+import AppLayoutManagement from '@/layouts/app-layout-management';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
 
@@ -30,8 +32,21 @@ export default function Profile({
 }) {
     const { auth } = usePage<SharedData>().props;
 
+    // El tipo de usuario está definido en auth.user.type
+    const userType = auth.user.type;
+    
+    // Seleccionar el layout basado en el tipo de usuario
+    let Layout;
+    if (['owner'].includes(userType)) {
+        Layout = AppLayoutOwner;
+    } else if (['super_admin'].includes(userType)) {
+        Layout = AppLayoutManagement;
+    } else {
+        Layout = AppLayout; // Para 'driver' y cualquier otro tipo
+    }
+
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <Layout breadcrumbs={breadcrumbs}>
             <Head title="Profile settings" />
 
             <SettingsLayout>
@@ -143,6 +158,6 @@ export default function Profile({
 
                 <DeleteUser />
             </SettingsLayout>
-        </AppLayout>
+        </Layout>
     );
 }
