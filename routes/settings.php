@@ -5,6 +5,7 @@ use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Settings\NegocioController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('settings', '/settings/profile');
@@ -25,4 +26,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
         ->name('two-factor.show');
+
+    // Negocio settings routes
+     Route::get('settings/business', [NegocioController::class, 'edit'])->name('settings.business');
+
+    Route::put('settings/business', [NegocioController::class, 'update'])->name('settings.business.update');
+    Route::post('settings/business-logo', [NegocioController::class, 'updateImage'])->name('settings.business.update-logo');
 });
