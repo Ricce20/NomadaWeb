@@ -59,6 +59,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function negocio()
+    {
+        return $this->hasMany(Negocio::class);
+    }
+
     /**
      * Verificar si es de un tipo específico
      */
