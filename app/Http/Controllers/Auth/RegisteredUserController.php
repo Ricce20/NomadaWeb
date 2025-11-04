@@ -45,6 +45,12 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         $request->session()->regenerate();
+
+        if(Auth::user()->type == 'owner' && !Auth::user()->negocio()->exists()){
+
+                return redirect()->intended(route('settings.business',absolute:false));
+            }
+
         
         return redirect()->intended(route(Auth::user()->getDashboardRouteName(), absolute: false));
 

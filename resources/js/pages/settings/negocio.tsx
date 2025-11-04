@@ -2,18 +2,21 @@ import HeadingSmall from "@/components/heading-small";
 import InputError from "@/components/input-error";
 import AppLayout from "@/layouts/app-layout";
 import SettingsLayout from "@/layouts/settings/layout";
-import { BreadcrumbItem } from "@/types";
+import { BreadcrumbItem, SharedData } from "@/types";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Field, Textarea, Transition } from '@headlessui/react';
-import { Form, Head, useForm } from '@inertiajs/react';
+import { Form, Head, useForm, usePage } from '@inertiajs/react';
 import { business } from "@/routes/settings";
 import {update,updateImage} from "@/actions/App/Http/Controllers/Settings/NegocioController";
 import { FieldLabel, FieldSet } from "@/components/ui/field";
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { Upload, X } from 'lucide-react';
 import Heading from "@/components/heading";
+
+import AppLayoutOwner from '@/layouts/app-layout-ownership';
+import AppLayoutManagement from '@/layouts/app-layout-management';
 
 interface MyBusinessProps {
   nombre?: string | null;
@@ -32,6 +35,24 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function MiNegocio({data}: {data: MyBusinessProps}) {
+    const { auth } = usePage<SharedData>().props;
+    const tieneNegocio = auth.user.negocio_count as number > 0;
+    console.log(tieneNegocio);
+    
+        
+        // El tipo de usuario está definido en auth.user.type
+        const userType = auth.user.type;
+        
+        // Seleccionar el layout basado en el tipo de usuario
+        let Layout;
+        if (['owner', 'super_admin'].includes(userType)) {
+            Layout = AppLayoutOwner;
+        } else if (['manager', 'warehouse_man'].includes(userType)) {
+            Layout = AppLayoutManagement;
+        } else {
+            Layout = AppLayout; // Para 'driver' y cualquier otro tipo
+        }
+
     const [preview, setPreview] = useState<string>(data.logo ?? '');
     
     const { data: formData, setData, post, processing, recentlySuccessful, errors } = useForm({
@@ -64,7 +85,7 @@ export default function MiNegocio({data}: {data: MyBusinessProps}) {
     };
    
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <Layout breadcrumbs={breadcrumbs}>
             <Head title="Acerca de mi negocio" />
 
             <SettingsLayout>
@@ -88,82 +109,85 @@ export default function MiNegocio({data}: {data: MyBusinessProps}) {
                             </div>
                         )}
                     </div>
-                    
-
-                    {/* Formulario de la imagen del negocio */}
-                    <form onSubmit={handleSubmit} className="space-y-6 border-2 border-primary border-dashed rounded-lg p-4 dark:border-foreground " >
-                        <div className="grid gap-2">
-                            <Label htmlFor="logo">Logo del negocio</Label>
-                            
-                            {!preview ? (
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-cyan-900 transition">
-                                    <input
-                                        type="file"
-                                        id="logo"
-                                        name="logo"
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                        className="hidden"
-                                    />
-                                    <label
-                                        htmlFor="logo"
-                                        className="cursor-pointer flex flex-col items-center"
-                                    >
-                                        <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                                        <span className="text-neutral-600 font-medium mb-1">
-                                            Selecciona el logo
-                                        </span>
-                                        <span className="text-sm text-neutral-500">
-                                            PNG, JPG, GIF
-                                        </span>
-                                    </label>
-                                </div>
-                            ) : (
-                                <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
-                                    <img
-                                        src={preview}
-                                        alt="Logo del negocio"
-                                        className="w-full h-64 object-cover"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={removeImage}
-                                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition shadow-lg"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                                        <p className="text-white text-sm font-medium truncate">
-                                            {formData.logo?.name || 'Logo actual'}
-                                        </p>
+                    {tieneNegocio && (
+                        // Formulario de la imagen del negocio
+                        <form onSubmit={handleSubmit} className="space-y-6 border-2 border-primary border-dashed rounded-lg p-4 dark:border-foreground">
+                            <div className="grid gap-2">
+                                <Label htmlFor="logo">Logo del negocio</Label>
+                                
+                                {!preview ? (
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-cyan-900 transition">
+                                        <input
+                                            type="file"
+                                            id="logo"
+                                            name="logo"
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                            className="hidden"
+                                        />
+                                        <label
+                                            htmlFor="logo"
+                                            className="cursor-pointer flex flex-col items-center"
+                                        >
+                                            <Upload className="w-12 h-12 text-gray-400 mb-4" />
+                                            <span className="text-neutral-600 font-medium mb-1">
+                                                Selecciona el logo
+                                            </span>
+                                            <span className="text-sm text-neutral-500">
+                                                PNG, JPG, GIF
+                                            </span>
+                                        </label>
                                     </div>
-                                </div>
-                            )}
-                            
-                            <InputError message={errors.logo} className="mt-2" />
-                        </div>
+                                ) : (
+                                    <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
+                                        <img
+                                            src={preview}
+                                            alt="Logo del negocio"
+                                            className="w-full h-64 object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition shadow-lg"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                            <p className="text-white text-sm font-medium truncate">
+                                                {formData.logo?.name || 'Logo actual'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <InputError message={errors.logo} className="mt-2" />
+                            </div>
 
-                        <div className="flex items-center gap-4">
-                            <Button
-                                type="submit"
-                                disabled={processing || !formData.logo}
-                            >
-                                {processing ? 'Guardando...' : 'Guardar logo'}
-                            </Button>
+                            <div className="flex items-center gap-4">
+                                <Button
+                                    type="submit"
+                                    disabled={processing || !formData.logo}
+                                >
+                                    {processing ? 'Guardando...' : 'Guardar logo'}
+                                </Button>
 
-                            <Transition
-                                show={recentlySuccessful}
-                                enter="transition ease-in-out"
-                                enterFrom="opacity-0"
-                                leave="transition ease-in-out"
-                                leaveTo="opacity-0"
-                            >
-                                <p className="text-sm text-neutral-600">
-                                    Guardado correctamente
-                                </p>
-                            </Transition>
-                        </div>
-                    </form>
+                                <Transition
+                                    show={recentlySuccessful}
+                                    enter="transition ease-in-out"
+                                    enterFrom="opacity-0"
+                                    leave="transition ease-in-out"
+                                    leaveTo="opacity-0"
+                                >
+                                    <p className="text-sm text-neutral-600">
+                                        Guardado correctamente
+                                    </p>
+                                </Transition>
+                            </div>
+                        </form>
+                    )}
+
+
+                   
 
 
                     <Form 
@@ -271,6 +295,6 @@ export default function MiNegocio({data}: {data: MyBusinessProps}) {
                     </Form>
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </Layout>
     );
 }

@@ -22,11 +22,19 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface Flash{
+    success:string;
+    error:string;
+    warning:string;
+    info:string;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    flash:Flash;
     [key: string]: unknown;
 }
 
@@ -51,4 +59,33 @@ export interface CustomNavItem {
     icon?: LucideIcon | null;
     isActive?: boolean;
     type: string|string[];
+}
+
+// types/index.ts (o donde tengas tus tipos)
+
+export interface HorarioDia {
+  cerrado: boolean;
+  hora_apertura: string;
+  hora_cierre: string;
+}
+
+export interface Horarios {
+  lunes: HorarioDia;
+  martes: HorarioDia;
+  miercoles: HorarioDia;
+  jueves: HorarioDia;
+  viernes: HorarioDia;
+  sabado: HorarioDia;
+  domingo: HorarioDia;
+}
+
+export interface SucursalItem {
+  id: number;
+  nombre: string;
+  direccion_completa: string | null;
+  telefono: string | null;
+  activo: boolean;
+  horarios: Horarios | null;
+  codigo_postal: string | null;
+  updated_at: Date; // Laravel envía fechas como string ISO
 }
