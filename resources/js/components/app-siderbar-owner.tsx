@@ -11,17 +11,23 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { ownership } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { SharedData, type NavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
+import { index } from '@/routes/sucursales';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard Owner',
-        href: ownership(),
+        href: ownership().url,
         icon: LayoutGrid,
     },
+    {
+        title: 'Sucursales',
+        href: index().url,
+        icon: Folder,
+    }
 ];
 
 const footerNavItems: NavItem[] = [
@@ -38,23 +44,30 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebarOwner() {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user;
+    const negocioCount = user.negocio_count;
+    const tieneNegocios = negocioCount as number > 0;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={ownership()} prefetch>
+                            <Link href={ownership().url} prefetch> {/* Agregado .url */}
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
-
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
-            </SidebarContent>
+            
+            {tieneNegocios && ( // Condición corregida
+                <SidebarContent>
+                    <NavMain items={mainNavItems} />
+                </SidebarContent>
+            )}
 
             <SidebarFooter>
                 <NavFooter items={footerNavItems} className="mt-auto" />

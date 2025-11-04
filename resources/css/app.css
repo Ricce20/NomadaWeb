@@ -63,11 +63,11 @@
 
 :root {
     /* Light Mode con tu paleta */
-    --background: #FEE8D0; /* Fondo crema */
+    --background: #eee4dd; /* Fondo */
     --foreground: #1B1B1B; /* Texto principal oscuro */
-    --card: #FEE8D0; /* Fondo de tarjetas crema */
+    --card: #e4e5e9; /* Fondo de tarjetas */
     --card-foreground: #1B1B1B; /* Texto en tarjetas oscuro */
-    --popover: #FEE8D0; /* Fondo de popovers crema */
+    --popover: #fee1d0; /* Fondo de popovers crema */
     --popover-foreground: #1B1B1B; /* Texto en popovers oscuro */
     --primary: #FC6F20; /* Color primario naranja */
     --primary-foreground: #FFFFFF; /* Texto sobre primario blanco */
@@ -88,8 +88,8 @@
     --chart-4: #FEE8D0; /* Chart 4 crema */
     --chart-5: #E5D5C3; /* Chart 5 crema claro */
     --radius: 0.625rem;
-    --sidebar: #FEE8D0; /* Sidebar crema */
-    --sidebar-foreground: #1B1B1B; /* Texto sidebar oscuro */
+    --sidebar: #f75e22; /* Sidebar crema */
+    --sidebar-foreground: #f3ecec; /* Texto sidebar oscuro */
     --sidebar-primary: #FC6F20; /* Primario sidebar naranja */
     --sidebar-primary-foreground: #FFFFFF; /* Texto sobre primario sidebar blanco */
     --sidebar-accent: #FEE8D0; /* Acento sidebar crema */

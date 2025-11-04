@@ -55,6 +55,11 @@ class AuthenticatedSessionController extends Controller
             // Almacenar el método de inicio de sesión utilizado para futuros inicios de sesión
             $request->session()->put('preferred_login_method', $request->has('email') ? 'email' : 'username');
 
+            if(Auth::user()->type == 'owner' && !Auth::user()->negocio()->exists()){
+
+                return redirect()->intended(route('settings.business',absolute:false));
+            }
+
             // Redirigir al dashboard correspondiente según el tipo de usuario
             return redirect()->intended(route(Auth::user()->getDashboardRouteName(), absolute: false));
 
