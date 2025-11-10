@@ -14,10 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import AppLayoutOwnership from "@/layouts/app-layout-ownership";
-import { create, edit, index } from "@/routes/sucursales";
+import { create, edit, index, view } from "@/routes/sucursales";
 import { BreadcrumbItem, Horarios, SucursalItem } from "@/types";
 import { Head, Link } from "@inertiajs/react";
-import { Plus, Store, MapPin, Phone, Clock, Mail, Pencil } from "lucide-react";
+import { Plus, Store, MapPin, Phone, Clock, Mail, Pencil, View } from "lucide-react";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -191,6 +191,18 @@ export default function Sucursales({
                             <TooltipContent>
                                 <p>Editar sucursal</p>
                             </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild >
+                            <Link 
+                              href={view(sucursal.id).url}
+                            > 
+                            <View/>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Gestionar</p>
+                          </TooltipContent>
                         </Tooltip>
                        
                         {sucursal.activo ? (

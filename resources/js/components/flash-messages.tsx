@@ -1,6 +1,6 @@
 // components/flash-messages.tsx
 import { usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import { SharedData } from '@/types';
@@ -14,48 +14,61 @@ interface Toast {
 export function FlashMessages() {
     const { flash } = usePage<SharedData>().props;
     const [toasts, setToasts] = useState<Toast[]>([]);
+    const previousFlashRef = useRef(flash);
 
     useEffect(() => {
         const newToasts: Toast[] = [];
 
-        if (flash.success) {
-            newToasts.push({
-                id: Date.now() + 1,
-                message: flash.success,
-                type: 'success'
-            });
-        }
-        if (flash.error) {
-            newToasts.push({
-                id: Date.now() + 2,
-                message: flash.error,
-                type: 'error'
-            });
-        }
-        if (flash.warning) {
-            newToasts.push({
-                id: Date.now() + 3,
-                message: flash.warning,
-                type: 'warning'
-            });
-        }
-        if (flash.info) {
-            newToasts.push({
-                id: Date.now() + 4,
-                message: flash.info,
-                type: 'info'
-            });
-        }
+        // Solo procesar si los flash messages han cambiado
+        const hasFlashChanged = 
+            flash.success !== previousFlashRef.current.success ||
+            flash.error !== previousFlashRef.current.error ||
+            flash.warning !== previousFlashRef.current.warning ||
+            flash.info !== previousFlashRef.current.info;
 
-        if (newToasts.length > 0) {
-            setToasts(prev => [...prev, ...newToasts]);
+        if (hasFlashChanged) {
+            if (flash.success) {
+                newToasts.push({
+                    id: Date.now() + 1,
+                    message: flash.success,
+                    type: 'success'
+                });
+            }
+            if (flash.error) {
+                newToasts.push({
+                    id: Date.now() + 2,
+                    message: flash.error,
+                    type: 'error'
+                });
+            }
+            if (flash.warning) {
+                newToasts.push({
+                    id: Date.now() + 3,
+                    message: flash.warning,
+                    type: 'warning'
+                });
+            }
+            if (flash.info) {
+                newToasts.push({
+                    id: Date.now() + 4,
+                    message: flash.info,
+                    type: 'info'
+                });
+            }
 
-            // Auto-remover después de 5 segundos
-            newToasts.forEach(toast => {
-                setTimeout(() => {
-                    removeToast(toast.id);
-                }, 5000);
-            });
+            if (newToasts.length > 0) {
+                setToasts(prev => [...prev, ...newToasts]);
+
+                // Auto-remover después de 5 segundos
+                newToasts.forEach(toast => {
+                    setTimeout(() => {
+                        removeToast(toast.id);
+                    }, 5000);
+                });
+            }
+
+            // Actualizar la referencia
+            previousFlashRef.current = { ...flash };
         }
     }, [flash]);
 

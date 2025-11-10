@@ -49,7 +49,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
         ? sucursal.nombre.split(' - ').slice(1).join(' - ') 
         : '';
 
-    const { data, setData, post, put, processing, errors } = useForm({
+    const { data, setData, post, put, processing, errors , reset} = useForm({
         nombre: nombreLimpio || '',
         telefono: sucursal?.telefono || '',
         direccion_completa: sucursal?.direccion_completa || '',
@@ -71,7 +71,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
             post(store().url, {
                 preserveScroll: true,
                 onSuccess: () => {
-                    // Opcional: mostrar notificación de éxito
+                    reset();
                 }
             });
         }

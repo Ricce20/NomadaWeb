@@ -27,7 +27,8 @@ const mainNavItems: NavItem[] = [
         title: 'Sucursales',
         href: index().url,
         icon: Folder,
-    }
+    },
+   
 ];
 
 const footerNavItems: NavItem[] = [

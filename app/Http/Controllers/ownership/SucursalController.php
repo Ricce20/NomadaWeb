@@ -39,6 +39,16 @@ class SucursalController extends Controller
         ]);
     }
 
+    public function view(string|int $id){
+        $negocio = auth()->user()->negocio()->first();
+
+        $sucursal =  Sucursal::where('negocio_id',$negocio->id)->where('id',$id)->first();
+
+        return Inertia::render('ownership/sucursales/view',[
+            'sucursal' => $sucursal
+        ]);
+
+    }
     //create
     public function create(Request $request)
     {
