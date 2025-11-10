@@ -43,13 +43,16 @@ export type UserType = 'super_admin' | 'owner' | 'driver' | 'warehouse_man' | 'm
 export interface User {
     id: number;
     name: string;
-    email: string;
+    email?: string|null;
     type: UserType;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
+    phone?:string|null;
+    username?:string | null;
     created_at: string;
     updated_at: string;
+    deleted_at:string;
     [key: string]: unknown; // This allows for additional properties...
 }
 

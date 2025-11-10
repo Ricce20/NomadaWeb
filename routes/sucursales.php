@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ownership\SucursalController;
 use App\Http\Controllers\ownership\EmpleadoController;
+use App\Http\Controllers\ownership\UserController;
 
 
 Route::middleware('auth')->group(function () {
@@ -29,5 +30,14 @@ Route::middleware('auth')->group(function () {
         ->name('empleado.update');
         Route::delete('/empleado/{id}/delete',[EmpleadoController::class,'delete'])
         ->name('empleado.delete');
+        //usuarios
+        Route::get('/{sucursalId}/usuarios/index', [UserController::class, 'index'])->name('usuario.index');
+        Route::post('/registrar/usuario', [UserController::class, 'store'])->name('usuario.store');
+        Route::put('/{usuario}/usuario/update', [UserController::class, 'update'])->name('usuario.update');
+        Route::delete('/{usuario}/usuario/delete', [UserController::class, 'destroy'])->name('usuario.delete');
+        Route::put('/{usuario}/usuario/restore', [UserController::class, 'restore'])->name('usuario.restore');
+    
     });
+
+
 });

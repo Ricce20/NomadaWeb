@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import empleado from '@/routes/sucursal/empleado';
+import usuario from '@/routes/sucursal/usuario';
 import { view } from '@/routes/sucursales';
 import { NavItem, SucursalItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -14,7 +15,7 @@ const getSidebarNavItems = (sucursalId: number): NavItem[] => [
     { title: 'Almacenes', href: '', icon: null },
     { title: 'Productos', href: '', icon: null },
     { title: 'Vehículos', href: '', icon: null },
-    { title: 'Usuarios', href: '', icon: null },
+    { title: 'Usuarios', href: usuario.index(sucursalId), icon: null },
 ];
 
 export default function SucursalPartialLayout({ children }: PropsWithChildren) {

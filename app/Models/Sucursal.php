@@ -35,6 +35,16 @@ class Sucursal extends Model
         return $this->belongsTo(Negocio::class);
     }
 
+     public function usuarios(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'sucursal_usuarios',
+            'sucursal_id',
+            'user_id'
+        )->withTimestamps();
+    }
+
     public function empleados()
     {
         return $this->belongsToMany(Empleado::class, 'sucursal_empleados')
