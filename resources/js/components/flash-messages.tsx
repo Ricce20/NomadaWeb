@@ -1,6 +1,6 @@
 // components/flash-messages.tsx
 import { usePage } from '@inertiajs/react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import { SharedData } from '@/types';
@@ -15,6 +15,11 @@ export function FlashMessages() {
     const { flash } = usePage<SharedData>().props;
     const [toasts, setToasts] = useState<Toast[]>([]);
     const previousFlashRef = useRef(flash);
+
+    //Declarar removeToast ANTES de usarlo en useEffect
+    const removeToast = useCallback((id: number) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, []);
 
     useEffect(() => {
         const newToasts: Toast[] = [];
@@ -70,11 +75,7 @@ export function FlashMessages() {
             // Actualizar la referencia
             previousFlashRef.current = { ...flash };
         }
-    }, [flash]);
-
-    const removeToast = (id: number) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-    };
+    }, [flash, removeToast]); // Agregar removeToast a las dependencias
 
     const getAlertConfig = (type: Toast['type']) => {
         switch (type) {

@@ -68,14 +68,9 @@ class EmpleadoController extends Controller
                 
             ]);
 
-        $total = Empleado::where('negocio_id',$negocioId)->count();
-        $tieneSucursales = auth()->user()->negocio()->exists();
-
         return Inertia::render('ownership/sucursales/partials/empleados', [
                 'items' => $items,
                 'filters' => $request->only(['search', 'trashed', 'sort', 'direction']),
-                'hasSucursales' => $tieneSucursales,
-                'total' => $total,
                 'sucursal' => $sucursal
             ]);
     }

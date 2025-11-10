@@ -11,7 +11,7 @@ import { BreadcrumbItem, PaginatedResponse, Empleado as EmpleadoType, SucursalIt
 import { Head, router } from "@inertiajs/react";
 import { debounce } from "lodash";
 import { Users, User, Pencil, Trash, BadgeCheck, Phone, Clock, Calendar, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmpleadoDialog } from "@/components/empleado-dialog";
 import empleado from '@/routes/sucursal/empleado';
 
@@ -41,12 +41,10 @@ type RouterPayload = Record<string, string | number | boolean | null | undefined
 interface IndexProps {
   items: PaginatedResponse<EmpleadoType>;
   filters: Filters;
-  hasSucursales: boolean;
-  total: number;
   sucursal: SucursalItem;
 }
 
-export default function Empleados({ sucursal, items, filters, hasSucursales, total }: IndexProps) {
+export default function Empleados({ sucursal, items, filters }: IndexProps) {
   const breadcrumbs: BreadcrumbItem[] = [
     {
       title: "Empleados",
@@ -80,20 +78,20 @@ export default function Empleados({ sucursal, items, filters, hasSucursales, tot
     };
   };
 
-  const debouncedSearch = useCallback(
-    debounce((filters: Filters) => {
+  const debouncedSearch = useMemo(
+    () => debounce((filters: Filters) => {
       router.get(empleado.index(sucursal.id).url, filtersToPayload(filters), {
         preserveState: true,
         replace: true,
       });
     }, 500),
-    []
+    [sucursal.id]
   );
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     const newFilters: Filters = {
       ...filtersData,
-      [key]: key === "direction" ? ((value as "asc" | "desc") as any) : value,
+      [key]: value,
     };
     setFilters(newFilters);
 
