@@ -1,13 +1,13 @@
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { cn, isSameUrl, resolveUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { business } from '@/routes/settings';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
-import { CustomNavItem, SharedData, type NavItem } from '@/types';
+import { CustomNavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
@@ -45,12 +45,15 @@ const sidebarNavItems: CustomNavItem[] = [
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    // Llamar a todos los hooks ANTES de cualquier return condicional
+    const { auth } = usePage<SharedData>().props;
+    
+    // Los returns condicionales
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
-    //datos del usuario logeado
-    const { auth } = usePage<SharedData>().props;
+    
     const currentPath = window.location.pathname;
 
      // Función para verificar si el item debe mostrarse

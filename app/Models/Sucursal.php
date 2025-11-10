@@ -35,4 +35,11 @@ class Sucursal extends Model
         return $this->belongsTo(Negocio::class);
     }
 
+    public function empleados()
+    {
+        return $this->belongsToMany(Empleado::class, 'sucursal_empleados')
+                    ->withPivot(['id','activo','started_at','ended_at','changed_by'])
+                    ->withTimestamps();
+    }
+
 }
