@@ -149,3 +149,23 @@ export interface SucursalSelect{
     id:string|number,
     nombre:string
 }
+
+export interface Almacen{
+    id:number|string;
+    nombre:string;
+    descripcion:string;
+    ubicacion:string;
+    sucursal_id:string|number;
+    created_at:string;
+    deleted_at:string;
+    updated_at:string;
+    activo:boolean;
+}
+
+export interface AlmacenForm{
+    nombre:string;
+    descripcion:string;
+    ubicacion:string;
+    sucursal_id:string|number;
+    activo?:boolean | null;
+}
