@@ -73,6 +73,27 @@ class User extends Authenticatable
         return $this->type === $type;
     }
 
+     public function sucursales(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Sucursal::class,
+            'sucursal_usuarios',
+            'user_id',
+            'sucursal_id'
+        )->withTimestamps();
+    }
+
+     public function getBusinessId(): ?int
+    {
+        if ($this->isOwner()) {
+            return $this->negocio()->pluck('id')->first();
+        }
+
+        // Para otros tipos de usuario, obtener el negocio de la primera sucursal
+        $sucursal = $this->sucursales()->first();
+        return $sucursal ? $sucursal->business_id : null;
+    }
+
     /**
      * Obtener ruta de redirección según el tipo
      */

@@ -2,19 +2,22 @@ import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import almacen from '@/routes/sucursal/almacen';
 import empleado from '@/routes/sucursal/empleado';
+import usuario from '@/routes/sucursal/usuario';
 import { view } from '@/routes/sucursales';
 import { NavItem, SucursalItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+import { Boxes, Caravan, LucideFileSpreadsheet, UserCheck2Icon, UserCog2, Warehouse } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 
 const getSidebarNavItems = (sucursalId: number): NavItem[] => [
-    { title: 'Detalles', href: view(sucursalId), icon: null },
-    { title: 'Empleados', href: empleado.index(sucursalId), icon: null },
-    { title: 'Almacenes', href: '', icon: null },
-    { title: 'Productos', href: '', icon: null },
-    { title: 'Vehículos', href: '', icon: null },
-    { title: 'Usuarios', href: '', icon: null },
+    { title: 'Detalles', href: view(sucursalId), icon: LucideFileSpreadsheet },
+    { title: 'Empleados', href: empleado.index(sucursalId), icon: UserCheck2Icon },
+    { title: 'Almacenes', href: almacen.index(sucursalId).url, icon: Warehouse },
+    { title: 'Productos', href: '', icon: Boxes },
+    { title: 'Vehículos', href: '', icon:  Caravan},
+    { title: 'Usuarios', href: usuario.index(sucursalId), icon: UserCog2 },
 ];
 
 export default function SucursalPartialLayout({ children }: PropsWithChildren) {

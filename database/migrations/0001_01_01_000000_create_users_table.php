@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('username')->unique()->nullable();
             $table->string('phone', 15)->unique()->nullable();
             $table->enum('type', ['super_admin', 'owner', 'driver','warehouse_man','manager'])->default('owner');
-            $table->string('email')->unique();
+            $table->string('email')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->softDeletes();
