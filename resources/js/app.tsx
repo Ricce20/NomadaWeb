@@ -5,6 +5,15 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
+import axios from 'axios';
+
+const token = document
+    .querySelector("meta[name='csrf-token']")
+    ?.getAttribute('content') || '';
+if (token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+}
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

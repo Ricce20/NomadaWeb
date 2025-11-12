@@ -3,7 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
-
+use App\Http\Controllers\Ownership\SucursalController;
+use App\Http\Controllers\Management\ProductBaseController;
+use App\Http\Controllers\Management\ProductBaseMediaController;
+use App\Http\Controllers\Management\ProductBasePricingController;
 
 Route::get('/', function () {
     return view('landing-page');
@@ -17,6 +20,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('management', function () {
         return Inertia::render('management');
     })->name('management');
+
+    // Grupo de rutas de management (temporalmente sin restricción de rol para pruebas)
+    Route::prefix('management')
+        ->name('management.')
+        ->middleware(['auth', 'verified', 'role:super_admin'])
+        ->group(function () {
+            // CRUD de product_bases
+            Route::resource('product-bases', ProductBaseController::class);
+
+            // Media
+            Route::post('product-bases/{product}/images', [ProductBaseController::class, 'imagesStore'])
+                ->name('product-bases.images.store');
+            Route::delete('product-bases/{product}/images/{image}', [ProductBaseController::class, 'imagesDestroy'])
+                ->name('product-bases.images.destroy');
+
+            // Pricing (pivot branch_product_base)
+            Route::post('product-bases/{product}/pricing', [ProductBaseController::class, 'pricingStore'])
+                ->name('product-bases.pricing.store');
+            Route::put('product-bases/{product}/pricing/{id}', [ProductBaseController::class, 'pricingUpdate'])
+                ->name('product-bases.pricing.update');
+            Route::delete('product-bases/{product}/pricing/{id}', [ProductBaseController::class, 'pricingDestroy'])
+                ->name('product-bases.pricing.destroy');
+
+            // Soft delete management
+            Route::post('product-bases/{id}/restore', [ProductBaseController::class, 'restore'])
+                ->name('product-bases.restore');
+            Route::delete('product-bases/{id}/force', [ProductBaseController::class, 'forceDelete'])
+                ->name('product-bases.force-delete');
+        });
 
     Route::get('ownership', function () {
         return Inertia::render('ownership');
