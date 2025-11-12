@@ -169,3 +169,32 @@ export interface AlmacenForm{
     sucursal_id:string|number;
     activo?:boolean | null;
 }
+export interface Vehiculo {
+  id: number|string
+  placa: string
+  marca: string
+  modelo: string
+  color?: string
+  tipo: 'camioneta' | 'camion' | 'pickup' | 'furgoneta' | 'trailer' | 'van'
+  kilometros_por_litro?: number
+  precio_litro_combustible?: number
+  capacidad_carga_kg?: number
+  estado: 'activo' | 'mantenimiento' | 'inactivo'
+  sucursal_id: number
+  created_at: string
+  updated_at: string
+  deleted_at:string
+}
+
+
+export interface VehiculoForm {
+  placa: string
+  marca: string
+  modelo: string
+  color?: string
+  tipo: 'camioneta' | 'camion' | 'pickup' | 'furgoneta' | 'trailer' | 'van'
+  kilometros_por_litro?: number
+  precio_litro_combustible?: number
+  capacidad_carga_kg?: number
+  estado: 'activo' | 'mantenimiento' | 'inactivo'
+}
