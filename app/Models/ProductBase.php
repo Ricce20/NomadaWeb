@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductBase extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'sku_base',
@@ -18,11 +19,18 @@ class ProductBase extends Model
         'tax_code',
         'specs_json',
         'is_active',
+        'approval_status',
+        'origin_negocio_id',
+        'created_by',
+        'approved_at',
+        'rejected_at',
     ];
 
     protected $casts = [
         'specs_json' => 'array',
         'is_active' => 'boolean',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function brand()
@@ -63,5 +71,33 @@ class ProductBase extends Model
                 'stock',
             ])
             ->withTimestamps();
+    }
+
+    public function originNegocio()
+    {
+        return $this->belongsTo(Negocio::class, 'origin_negocio_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Scopes
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', 'approved');
+    }
+
+    public function scopeVisibleFor($query, User $user)
+    {
+        $negocioId = optional($user->negocio()->first())->id;
+        return $query->where(function ($q) use ($negocioId) {
+            $q->where('approval_status', 'approved')
+                ->orWhere(function ($w) use ($negocioId) {
+                    $w->where('approval_status', 'pending')
+                        ->where('origin_negocio_id', $negocioId);
+                });
+        });
     }
 }

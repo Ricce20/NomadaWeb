@@ -35,13 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('product-bases/{product}/images/{image}', [ProductBaseController::class, 'imagesDestroy'])
                 ->name('product-bases.images.destroy');
 
-            // Pricing (pivot branch_product_base)
-            Route::post('product-bases/{product}/pricing', [ProductBaseController::class, 'pricingStore'])
-                ->name('product-bases.pricing.store');
-            Route::put('product-bases/{product}/pricing/{id}', [ProductBaseController::class, 'pricingUpdate'])
-                ->name('product-bases.pricing.update');
-            Route::delete('product-bases/{product}/pricing/{id}', [ProductBaseController::class, 'pricingDestroy'])
-                ->name('product-bases.pricing.destroy');
+            // DEPRECATED: Pricing routes removed
+            // Los precios por sucursal se administran en: /sucursales/{id}/productos
 
             // Soft delete management
             Route::post('product-bases/{id}/restore', [ProductBaseController::class, 'restore'])

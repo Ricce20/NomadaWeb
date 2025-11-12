@@ -4,15 +4,17 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable,SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, SoftDeletes;
 
     // Tipos de usuario
     const TYPE_SUPER_ADMIN = 'super_admin';
@@ -119,4 +121,77 @@ class User extends Authenticatable
     public function isAdmin(): bool { return $this->type === self::TYPE_MANAGER; }
     public function isAlmacenista(): bool { return $this->type === self::TYPE_WAREHOUSEMAN; }
     public function isConductor(): bool { return $this->type === self::TYPE_DRIVER; }
+
+    /**
+     * Verificar si el usuario es dueño de una sucursal
+     */
+    public function ownsSucursal(Sucursal $sucursal): bool
+    {
+        if (!$this->isOwner()) {
+            return false;
+        }
+
+        // Verificar que la sucursal pertenece al negocio del owner
+        $negocioId = $this->negocio()->pluck('id')->first();
+        return $negocioId && $sucursal->negocio_id === $negocioId;
+    }
+
+    /**
+     * Verificar si el usuario gestiona una sucursal (manager asignado)
+     */
+    public function managesSucursal(Sucursal $sucursal): bool
+    {
+        if (!$this->isAdmin()) {
+            return false;
+        }
+
+        // Verificar si el manager está asignado a la sucursal
+        return $this->sucursales()->where('sucursales.id', $sucursal->id)->exists();
+    }
+
+    /**
+     * Verificar si el usuario es almacenista de una sucursal
+     */
+    public function warehousesSucursal(Sucursal $sucursal): bool
+    {
+        if (!$this->isAlmacenista()) {
+            return false;
+        }
+
+        // Verificar si el almacenista está asignado a la sucursal
+        return $this->sucursales()->where('sucursales.id', $sucursal->id)->exists();
+    }
+
+    /**
+     * Verificar si el usuario puede leer información de una sucursal
+     */
+    public function canReadSucursal(Sucursal $sucursal): bool
+    {
+        // Super admin puede leer todo
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Owner puede leer sus sucursales
+        if ($this->ownsSucursal($sucursal)) {
+            return true;
+        }
+
+        // Manager puede leer sucursales asignadas
+        if ($this->managesSucursal($sucursal)) {
+            return true;
+        }
+
+        // Warehouse puede leer sucursales asignadas
+        if ($this->warehousesSucursal($sucursal)) {
+            return true;
+        }
+
+        // Driver puede leer sucursales asignadas
+        if ($this->isConductor() && $this->sucursales()->where('sucursales.id', $sucursal->id)->exists()) {
+            return true;
+        }
+
+        return false;
+    }
 }

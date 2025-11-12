@@ -1,9 +1,10 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ownership\SucursalController;
-use App\Http\Controllers\ownership\EmpleadoController;
-use App\Http\Controllers\ownership\UserController;
-use App\Http\Controllers\ownership\AlmacenController;
+use App\Http\Controllers\Ownership\SucursalController;
+use App\Http\Controllers\Ownership\EmpleadoController;
+use App\Http\Controllers\Ownership\UserController;
+use App\Http\Controllers\Ownership\AlmacenController;
+use App\Http\Controllers\Ownership\BranchProductController;
 
 
 Route::middleware('auth')->group(function () {
@@ -42,7 +43,23 @@ Route::middleware('auth')->group(function () {
         Route::post('/registrar/almacen',[AlmacenController::class,'store'])->name('almacen.store');
         Route::put('/{id}/almacen/update',[AlmacenController::class,'update'])->name('almacen.update');
         Route::delete('/{id}/almacen/delete',[AlmacenController::class,'delete'])->name('almacen.delete');
+        
+        // Alias de compatibilidad: /sucursal/{sucursal}/productos → /sucursales/{sucursal}/productos
+        Route::get('/{sucursal}/productos', function (\App\Models\Sucursal $sucursal) {
+            return redirect()->route('sucursales.productos.index', $sucursal);
+        })->name('productos.redirect');
     });
 
+    // Productos por sucursal (Route Model Binding)
+    Route::middleware(['auth'])
+        ->prefix('sucursales/{sucursal}')
+        ->name('sucursales.')
+        ->group(function () {
+            Route::get('productos', [BranchProductController::class, 'index'])->name('productos.index');
+            Route::post('productos', [BranchProductController::class, 'store'])->name('productos.store');
+            Route::post('productos/quick-add', [BranchProductController::class, 'quickAdd'])->name('productos.quick-add');
+            Route::put('productos/{pivot}', [BranchProductController::class, 'update'])->name('productos.update');
+            Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
+        });
 
 });

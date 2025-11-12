@@ -101,60 +101,9 @@ class ProductBaseController
         return response()->json(['ok' => true, 'resource' => 'product-bases.images.destroy', 'id' => $product->id, 'image' => $image]);
     }
 
-    // Pricing
-    public function pricingStore(Request $req, ProductBase $product)
-    {
-        $validated = $req->validate([
-            'branch_id' => ['required', 'exists:branches,id'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['nullable', 'integer', 'min:0'],
-        ]);
-
-        // Validar duplicados: no permitir mismo product_base_id + branch_id
-        $exists = ProductBaseBranch::where('product_base_id', $product->id)
-            ->where('branch_id', $validated['branch_id'])
-            ->exists();
-
-        if ($exists) {
-            return back()->withErrors(['branch_id' => 'Ya existe un precio para esta sucursal.']);
-        }
-
-        ProductBaseBranch::create([
-            'product_base_id' => $product->id,
-            'branch_id' => $validated['branch_id'],
-            'price' => $validated['price'],
-            'stock' => $validated['stock'] ?? 0,
-        ]);
-
-        return back()->with('ok', 'Precio agregado');
-    }
-
-    public function pricingUpdate(Request $req, ProductBase $product, int $id)
-    {
-        $validated = $req->validate([
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'stock' => ['nullable', 'integer', 'min:0'],
-        ]);
-
-        $pricing = ProductBaseBranch::where('id', $id)
-            ->where('product_base_id', $product->id)
-            ->firstOrFail();
-
-        $pricing->update(array_filter($validated, fn($v) => $v !== null));
-
-        return back()->with('ok', 'Precio actualizado');
-    }
-
-    public function pricingDestroy(ProductBase $product, int $id)
-    {
-        $pricing = ProductBaseBranch::where('id', $id)
-            ->where('product_base_id', $product->id)
-            ->firstOrFail();
-
-        $pricing->delete();
-
-        return back()->with('ok', 'Precio eliminado');
-    }
+    // DEPRECATED: Pricing management moved to Ownership
+    // Los precios por sucursal se administran en: /sucursales/{id}/productos
+    // Solo Owner/Manager pueden gestionar precios de sus sucursales
 
     // Soft delete management
     public function restore(int $id)
