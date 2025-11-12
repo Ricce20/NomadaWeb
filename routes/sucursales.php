@@ -4,6 +4,7 @@ use App\Http\Controllers\ownership\SucursalController;
 use App\Http\Controllers\ownership\EmpleadoController;
 use App\Http\Controllers\ownership\UserController;
 use App\Http\Controllers\ownership\AlmacenController;
+use App\Http\Controllers\ownership\VehiculoController;
 
 
 Route::middleware('auth')->group(function () {
@@ -42,6 +43,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/registrar/almacen',[AlmacenController::class,'store'])->name('almacen.store');
         Route::put('/{id}/almacen/update',[AlmacenController::class,'update'])->name('almacen.update');
         Route::delete('/{id}/almacen/delete',[AlmacenController::class,'delete'])->name('almacen.delete');
+        //vehiculos
+        Route::get('{sucurslId}/vehiculos/index',[VehiculoController::class,'index'])->name('vehiculo.index');
+
+        Route::post('/registrar/hehiculo',[VehiculoController::class,'store'])->name('vehiculo.store');
+
+        Route::put('/{id}/vehiculo/update',[VehiculoController::class,'update'])->name('vehiculo.update');
+
+        Route::delete('/{id}/vehiculo/delete',[VehiculoController::class,'delete'])->name('vehiculo.delete');
+    
     });
 
 
