@@ -6,6 +6,7 @@ import almacen from '@/routes/sucursal/almacen';
 import empleado from '@/routes/sucursal/empleado';
 import usuario from '@/routes/sucursal/usuario';
 import productos from '@/routes/sucursales/productos';
+import vehiculo from '@/routes/sucursal/vehiculo';
 import { view } from '@/routes/sucursales';
 import { NavItem, SucursalItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -16,8 +17,8 @@ const getSidebarNavItems = (sucursalId: number): NavItem[] => [
     { title: 'Detalles', href: view(sucursalId), icon: LucideFileSpreadsheet },
     { title: 'Empleados', href: empleado.index(sucursalId), icon: UserCheck2Icon },
     { title: 'Almacenes', href: almacen.index(sucursalId).url, icon: Warehouse },
-    { title: 'Productos', href: productos.index(sucursalId).url, icon: Boxes }, // Usa ruta canónica plural
-    { title: 'Vehículos', href: '', icon:  Caravan},
+    { title: 'Productos', href: productos.index(sucursalId).url, icon: Boxes },
+    { title: 'Vehículos', href: vehiculo.index(sucursalId).url, icon: Caravan},
     { title: 'Usuarios', href: usuario.index(sucursalId), icon: UserCog2 },
 ];
 

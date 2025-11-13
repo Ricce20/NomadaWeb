@@ -5,6 +5,8 @@ use App\Http\Controllers\Ownership\EmpleadoController;
 use App\Http\Controllers\Ownership\UserController;
 use App\Http\Controllers\Ownership\AlmacenController;
 use App\Http\Controllers\Ownership\BranchProductController;
+use App\Http\Controllers\ownership\VehiculoController;
+use App\Http\Controllers\ownership\NegocioClienteController;
 
 
 Route::middleware('auth')->group(function () {
@@ -43,6 +45,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/registrar/almacen',[AlmacenController::class,'store'])->name('almacen.store');
         Route::put('/{id}/almacen/update',[AlmacenController::class,'update'])->name('almacen.update');
         Route::delete('/{id}/almacen/delete',[AlmacenController::class,'delete'])->name('almacen.delete');
+        
+        //vehiculos
+        Route::get('{sucurslId}/vehiculos/index',[VehiculoController::class,'index'])->name('vehiculo.index');
+        Route::post('/registrar/hehiculo',[VehiculoController::class,'store'])->name('vehiculo.store');
+        Route::put('/{id}/vehiculo/update',[VehiculoController::class,'update'])->name('vehiculo.update');
+        Route::delete('/{id}/vehiculo/delete',[VehiculoController::class,'delete'])->name('vehiculo.delete');
+
+        //clientes-owner
+        Route::get('/clientes/index',[NegocioClienteController::class,'index'])->name('cliente.index');
+        Route::post('/clientes/store',[NegocioClienteController::class,'store'])->name('cliente.store');
+        Route::put('/clientes/{id}/update',[NegocioClienteController::class,'update'])->name('cliente.update');
+        Route::delete('/clientes/{id}/delete',[NegocioClienteController::class,'delete'])->name('cliente.delete');
         
         // Alias de compatibilidad: /sucursal/{sucursal}/productos → /sucursales/{sucursal}/productos
         Route::get('/{sucursal}/productos', function (\App\Models\Sucursal $sucursal) {

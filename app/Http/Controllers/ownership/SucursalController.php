@@ -44,6 +44,10 @@ class SucursalController extends Controller
 
         $sucursal =  Sucursal::where('negocio_id',$negocio->id)->where('id',$id)->first();
 
+        if(!$sucursal){
+            return redirect()->back()->with(['error' => 'Accion no permitida']);
+        }
+
         return Inertia::render('ownership/sucursales/view',[
             'sucursal' => $sucursal
         ]);
