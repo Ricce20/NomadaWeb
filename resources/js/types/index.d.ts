@@ -198,3 +198,22 @@ export interface VehiculoForm {
   capacidad_carga_kg?: number
   estado: 'activo' | 'mantenimiento' | 'inactivo'
 }
+
+export interface Cliente{
+    id:string|number,
+    nombre:string,
+    apellidos:string,
+    telefono:string,
+    fecha_registro:string,
+    created_at:string,
+    updated_at:string,
+    deleted_at:string,
+    activo:boolean
+}
+
+export interface ClienteForm{
+    nombre:string,
+    apellidos:string,
+    telefono:string,
+    activo:boolean
+}

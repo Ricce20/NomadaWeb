@@ -13,9 +13,10 @@ import {
 import { ownership } from '@/routes';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UserCheckIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 import { index } from '@/routes/sucursales';
+import cliente from '@/routes/sucursal/cliente';
 
 const mainNavItems: NavItem[] = [
     {
@@ -27,6 +28,11 @@ const mainNavItems: NavItem[] = [
         title: 'Sucursales',
         href: index().url,
         icon: Folder,
+    },
+    {
+        title: 'Clientes',
+        href: cliente.index().url,
+        icon: UserCheckIcon,
     },
    
 ];
