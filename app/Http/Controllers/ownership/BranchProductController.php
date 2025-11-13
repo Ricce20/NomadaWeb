@@ -30,7 +30,10 @@ class BranchProductController extends Controller
             ->with([
                 'productBase.brand',
                 'productBase.category',
-                'productBase.uom'
+                'productBase.uom',
+                'productBase.images' => function ($q) {
+                    $q->orderBy('is_primary', 'desc')->orderBy('sort_order');
+                }
             ]);
 
         // Filtros
@@ -71,6 +74,7 @@ class BranchProductController extends Controller
             'unit' => $item->productBase->uom->abbreviation ?? 'N/A',
             'price' => $item->price,
             'stock' => $item->stock,
+            'image' => $item->productBase->images->first()?->path,
             'updated_at' => $item->updated_at->format('d/m/Y'),
             'created_at' => $item->created_at->format('d/m/Y')
         ]);
@@ -171,7 +175,7 @@ class BranchProductController extends Controller
     {
         $this->authorize('manage', $sucursal);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($sucursal, $request, &$sku) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($sucursal, $request, &$sku, &$base) {
             $user = $request->user();
             $negocioId = optional($user->negocio()->first())->id;
 
@@ -194,6 +198,16 @@ class BranchProductController extends Controller
                 'created_by' => $user->id,
             ]);
 
+            // Manejar imagen si se proporciona
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('product-images', 'public');
+                $base->images()->create([
+                    'path' => $path,
+                    'is_primary' => true,
+                    'sort_order' => 0,
+                ]);
+            }
+
             ProductBaseBranch::firstOrCreate(
                 ['product_base_id' => $base->id, 'sucursal_id' => $sucursal->id],
                 ['price' => (float) $request->input('price'), 'stock' => (int) $request->input('stock')]
@@ -202,4 +216,40 @@ class BranchProductController extends Controller
 
         return back()->with('success', "Producto creado para tu negocio y agregado a la sucursal (SKU: {$sku})");
     }
+
+    /**
+     * Update product image
+     */
+    public function updateImage(Sucursal $sucursal, ProductBaseBranch $pivot, Request $request)
+    {
+        $this->authorize('manage', $sucursal);
+
+        // Verificar que el pivot pertenece a la sucursal
+        abort_unless($pivot->sucursal_id === $sucursal->id, 403);
+
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        $productBase = $pivot->productBase;
+
+        // Eliminar imagen anterior si existe
+        $oldImage = $productBase->images()->where('is_primary', true)->first();
+        if ($oldImage) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage->path);
+            $oldImage->delete();
+        }
+
+        // Guardar nueva imagen
+        $path = $request->file('image')->store('product-images', 'public');
+        $productBase->images()->create([
+            'path' => $path,
+            'is_primary' => true,
+            'sort_order' => 0,
+        ]);
+
+        return back()->with('success', 'Imagen actualizada correctamente');
+    }
+
+
 }

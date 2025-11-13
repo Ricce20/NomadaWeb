@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
             Route::post('productos', [BranchProductController::class, 'store'])->name('productos.store');
             Route::post('productos/quick-add', [BranchProductController::class, 'quickAdd'])->name('productos.quick-add');
             Route::put('productos/{pivot}', [BranchProductController::class, 'update'])->name('productos.update');
+            Route::post('productos/{pivot}/image', [BranchProductController::class, 'updateImage'])->name('productos.update-image');
             Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
         });
 

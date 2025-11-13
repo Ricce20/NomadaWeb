@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import productos from "@/routes/sucursales/productos";
 import { router } from "@inertiajs/react";
 import axios from "axios";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search, Upload, X, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -70,6 +70,8 @@ export default function AddProductModal({
   const [stock, setStock] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [form, setForm] = useState({
     sku_base: "",
     name: "",
@@ -89,6 +91,8 @@ export default function AddProductModal({
       setSelectedProduct(null);
       setPrice("");
       setStock("");
+      setImageFile(null);
+      setImagePreview(null);
       setForm({
         sku_base: "",
         name: "",
@@ -192,20 +196,44 @@ export default function AddProductModal({
     Number.isInteger(Number(form.stock)) &&
     Number(form.stock) >= 0;
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2048 * 1024) {
+        toast.error("La imagen no debe superar los 2MB");
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleQuickAdd = () => {
     setCreating(true);
-    const payload = {
-      sku_base: form.sku_base?.trim() || undefined,
-      name: form.name.trim(),
-      brand_id: Number(form.brand_id),
-      category_id: Number(form.category_id),
-      uom_id: Number(form.uom_id),
-      price: Number(form.price),
-      stock: Number(form.stock),
-    };
+    const formData = new FormData();
+    
+    if (form.sku_base?.trim()) {
+      formData.append("sku_base", form.sku_base.trim());
+    }
+    formData.append("name", form.name.trim());
+    formData.append("brand_id", form.brand_id);
+    formData.append("category_id", form.category_id);
+    formData.append("uom_id", form.uom_id);
+    formData.append("price", form.price);
+    formData.append("stock", form.stock);
+    
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
 
-    router.post(productos.store(sucursalId).url.replace('/productos', '/productos/quick-add'), payload, {
+    router.post(productos.store(sucursalId).url.replace('/productos', '/productos/quick-add'), formData, {
       preserveScroll: true,
+      forceFormData: true,
       onSuccess: () => {
         toast.success("Producto creado y agregado a la sucursal");
         onClose();
@@ -462,6 +490,46 @@ export default function AddProductModal({
                     placeholder="0"
                   />
                 </div>
+              </div>
+
+              {/* Imagen del producto */}
+              <div className="space-y-2">
+                <Label>Imagen del producto (opcional)</Label>
+                {imagePreview ? (
+                  <div className="relative">
+                    <div className="w-full h-32 rounded-md border overflow-hidden flex items-center justify-center bg-muted">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      disabled={creating}
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Formatos: JPG, PNG, GIF, WEBP. Tamaño máximo: 2MB
+                </p>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

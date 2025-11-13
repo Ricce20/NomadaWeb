@@ -1,17 +1,6 @@
 import HeadingSmall from "@/components/heading-small";
 import AddProductModal from "@/components/productos/add-product-modal";
-import InlineEditCell from "@/components/productos/inline-edit-cell";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import EditProductModal from "@/components/productos/edit-product-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -25,7 +14,7 @@ import productos from "@/routes/sucursales/productos";
 import { BreadcrumbItem, PaginatedResponse, SucursalItem } from "@/types";
 import { Head, Link, router } from "@inertiajs/react";
 import debounce from "lodash.debounce";
-import { Boxes, ExternalLink, Filter, Plus, Trash2, X } from "lucide-react";
+import { Boxes, ExternalLink, Filter, Plus, Pencil, X, Image } from "lucide-react";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -39,6 +28,7 @@ interface ProductoItem {
   unit: string;
   price: string;
   stock: number;
+  image?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,7 +95,8 @@ export default function ProductosIndex({
     direction: filters.direction || "asc",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductoItem | null>(null);
   const [search, setSearch] = useState<string>(filters.search || "");
 
   const productosIndexUrl = productos.index(sucursal.id).url;
@@ -185,98 +176,14 @@ export default function ProductosIndex({
     });
   };
 
-  const handleUpdatePrice = async (productId: number, price: string | number) => {
-    setUpdatingIds((prev) => new Set(prev).add(productId));
-
-    return new Promise<void>((resolve, reject) => {
-      router.put(
-        productos.update({ sucursal: sucursal.id, pivot: productId }).url,
-        { price: parseFloat(price.toString()) },
-        {
-          preserveScroll: true,
-          onSuccess: () => {
-            toast({
-              title: "Actualizado",
-              description: "Precio actualizado correctamente",
-            });
-            resolve();
-          },
-          onError: (errors) => {
-            const errorMessage = Object.values(errors)[0] as string;
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: errorMessage || "Error al actualizar precio",
-            });
-            reject(new Error(errorMessage));
-          },
-          onFinish: () => {
-            setUpdatingIds((prev) => {
-              const newSet = new Set(prev);
-              newSet.delete(productId);
-              return newSet;
-            });
-          },
-        }
-      );
-    });
+  const handleEdit = (producto: ProductoItem) => {
+    setSelectedProduct(producto);
+    setIsEditModalOpen(true);
   };
 
-  const handleUpdateStock = async (productId: number, stock: string | number) => {
-    setUpdatingIds((prev) => new Set(prev).add(productId));
-
-    return new Promise<void>((resolve, reject) => {
-      router.put(
-        productos.update({ sucursal: sucursal.id, pivot: productId }).url,
-        { stock: parseInt(stock.toString()) },
-        {
-          preserveScroll: true,
-          onSuccess: () => {
-            toast({
-              title: "Actualizado",
-              description: "Stock actualizado correctamente",
-            });
-            resolve();
-          },
-          onError: (errors) => {
-            const errorMessage = Object.values(errors)[0] as string;
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: errorMessage || "Error al actualizar stock",
-            });
-            reject(new Error(errorMessage));
-          },
-          onFinish: () => {
-            setUpdatingIds((prev) => {
-              const newSet = new Set(prev);
-              newSet.delete(productId);
-              return newSet;
-            });
-          },
-        }
-      );
-    });
-  };
-
-  const handleDelete = (productId: number, productName: string) => {
-    router.delete(productos.destroy({ sucursal: sucursal.id, pivot: productId }).url, {
-      preserveScroll: true,
-      onSuccess: () => {
-        toast({
-          title: "Eliminado",
-          description: `"${productName}" eliminado de la sucursal`,
-        });
-      },
-      onError: (errors) => {
-        const errorMessage = Object.values(errors)[0] as string;
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage || "Error al eliminar producto",
-        });
-      },
-    });
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedProduct(null);
   };
 
   const isSuperAdmin = useMemo(() => {
@@ -420,6 +327,7 @@ export default function ProductosIndex({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[80px]">Imagen</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Marca</TableHead>
@@ -427,50 +335,42 @@ export default function ProductosIndex({
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    {can.manage && <TableHead className="text-right">Acciones</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.data.map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex items-center justify-center w-12 h-12 rounded-md border bg-muted overflow-hidden">
+                          {item.image ? (
+                            <img
+                              src={`/storage/${item.image}`}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerHTML = '<svg class="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                              }}
+                            />
+                          ) : (
+                            <Image className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{item.sku_base}</TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>{item.brand}</TableCell>
                       <TableCell>{item.category}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end">
-                          <span className="mr-1">$</span>
-                          {can.manage ? (
-                            <InlineEditCell
-                              value={parseFloat(item.price)}
-                              onSave={(value) => handleUpdatePrice(item.id, value)}
-                              type="number"
-                              min={0}
-                              disabled={updatingIds.has(item.id)}
-                              className="font-mono"
-                            />
-                          ) : (
-                            <span className="font-mono px-2 py-1">
-                              {parseFloat(item.price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
+                        <span className="font-mono">
+                          ${parseFloat(item.price).toFixed(2)}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end">
-                          {can.stock ? (
-                            <InlineEditCell
-                              value={item.stock}
-                              onSave={(value) => handleUpdateStock(item.id, value)}
-                              type="number"
-                              min={0}
-                              disabled={updatingIds.has(item.id)}
-                              className="font-mono"
-                            />
-                          ) : (
-                            <span className="font-mono px-2 py-1">{item.stock}</span>
-                          )}
-                          <span className="ml-1 text-muted-foreground text-sm">{item.unit}</span>
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="font-mono">{item.stock}</span>
+                          <span className="text-muted-foreground text-sm">{item.unit}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -478,37 +378,18 @@ export default function ProductosIndex({
                           {item.stock > 0 ? "Disponible" : "Sin stock"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {can.manage ? (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Se eliminará "{item.name}" de esta sucursal. El producto seguirá
-                                  existiendo en el catálogo corporativo.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(item.id, item.name)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </TableCell>
+                      {can.manage && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -538,14 +419,22 @@ export default function ProductosIndex({
         </div>
 
         {can.manage && (
-          <AddProductModal
-            open={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            sucursalId={sucursal.id}
-            brands={brands}
-            categories={categories}
-            units={units}
-          />
+          <>
+            <AddProductModal
+              open={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              sucursalId={sucursal.id}
+              brands={brands}
+              categories={categories}
+              units={units}
+            />
+            <EditProductModal
+              open={isEditModalOpen}
+              onClose={handleCloseEditModal}
+              sucursalId={sucursal.id}
+              producto={selectedProduct}
+            />
+          </>
         )}
       </SucursalPartialLayout>
     </AppLayoutOwnership>
