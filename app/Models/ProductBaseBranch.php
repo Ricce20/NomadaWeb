@@ -16,6 +16,7 @@ class ProductBaseBranch extends Model
         'price',
         'stock',
         'sale_type',
+        'image_path',
     ];
 
     protected $casts = [

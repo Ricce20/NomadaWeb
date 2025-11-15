@@ -36,6 +36,8 @@ interface ProductoItem {
   price: string;
   stock: number;
   image?: string | null;
+  branch_image?: string | null;
+  catalog_image?: string | null;
 }
 
 interface EditProductModalProps {
@@ -58,6 +60,7 @@ export default function EditProductModal({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -107,7 +110,7 @@ export default function EditProductModal({
         onSuccess: () => {
           toast({
             title: "Imagen actualizada",
-            description: "La imagen del producto se actualizó correctamente",
+            description: "La imagen de sucursal se actualizó correctamente",
           });
           setImageFile(null);
           setImagePreview(null);
@@ -122,6 +125,36 @@ export default function EditProductModal({
         },
         onFinish: () => {
           setIsUploadingImage(false);
+        },
+      }
+    );
+  };
+
+  const handleDeleteBranchImage = () => {
+    if (!producto) return;
+
+    setIsDeletingImage(true);
+
+    router.delete(
+      `/sucursales/${sucursalId}/productos/${producto.id}/image`,
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          toast({
+            title: "Imagen eliminada",
+            description: "Ahora se mostrará la imagen del catálogo",
+          });
+        },
+        onError: (errors) => {
+          const errorMessage = Object.values(errors)[0] as string;
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: errorMessage || "Error al eliminar la imagen",
+          });
+        },
+        onFinish: () => {
+          setIsDeletingImage(false);
         },
       }
     );
@@ -284,40 +317,107 @@ export default function EditProductModal({
               </div>
             </div>
 
-            {/* Gestión de imagen */}
-            <div className="space-y-2">
-              <Label>Cambiar imagen del producto</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  disabled={isUploadingImage}
-                  className="flex-1"
-                />
-                {imageFile && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleUploadImage}
-                    disabled={isUploadingImage}
-                  >
-                    {isUploadingImage ? (
-                      "Subiendo..."
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-1" />
-                        Subir
-                      </>
+            {/* Gestión de imágenes */}
+            <div className="space-y-4">
+              {/* Imagen de sucursal */}
+              <div className="space-y-2">
+                <Label>Imagen de la sucursal</Label>
+                <div className="rounded-lg border p-3 space-y-3">
+                  {producto.branch_image ? (
+                    <div className="space-y-2">
+                      <div className="w-full h-32 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
+                        <img
+                          src={`/storage/${producto.branch_image}`}
+                          alt="Imagen de sucursal"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeleteBranchImage}
+                        disabled={isDeletingImage}
+                        className="w-full"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {isDeletingImage ? "Eliminando..." : "Quitar imagen personalizada"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No hay imagen personalizada. Se usa la imagen del catálogo.
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={isUploadingImage}
+                        className="flex-1"
+                      />
+                      {imageFile && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleUploadImage}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            "Subiendo..."
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-1" />
+                              Subir
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    {imagePreview && (
+                      <div className="w-full h-32 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     )}
-                  </Button>
-                )}
+                    <p className="text-xs text-muted-foreground">
+                      Sube una imagen personalizada para esta sucursal. Formatos: JPG, PNG, GIF, WEBP. Máx: 2MB
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {producto.image 
-                  ? "Selecciona una nueva imagen para reemplazar la actual"
-                  : "Selecciona una imagen para este producto"}. Formatos: JPG, PNG, GIF, WEBP. Máx: 2MB
-              </p>
+
+              {/* Imagen del catálogo (solo lectura) */}
+              <div className="space-y-2">
+                <Label>Imagen del catálogo (solo lectura)</Label>
+                <div className="rounded-lg border p-3 bg-muted/30">
+                  {producto.catalog_image ? (
+                    <div className="w-full h-32 rounded-md border bg-muted overflow-hidden flex items-center justify-center">
+                      <img
+                        src={`/storage/${producto.catalog_image}`}
+                        alt="Imagen del catálogo"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      <div className="text-center">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">Este producto no tiene imagen en el catálogo</p>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Esta es la imagen corporativa del producto. Solo puede modificarse desde el dashboard de management.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Precio */}

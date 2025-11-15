@@ -29,6 +29,8 @@ interface ProductoItem {
   price: string;
   stock: number;
   image?: string | null;
+  branch_image?: string | null;
+  catalog_image?: string | null;
   created_at: string;
   updated_at: string;
 }

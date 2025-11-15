@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
             Route::post('productos/from-catalog', [BranchProductController::class, 'fromCatalog'])->name('productos.from-catalog');
             Route::put('productos/{pivot}', [BranchProductController::class, 'update'])->name('productos.update');
             Route::post('productos/{pivot}/image', [BranchProductController::class, 'updateImage'])->name('productos.update-image');
+            Route::delete('productos/{pivot}/image', [BranchProductController::class, 'destroyImage'])->name('productos.destroy-image');
             Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
         });
 

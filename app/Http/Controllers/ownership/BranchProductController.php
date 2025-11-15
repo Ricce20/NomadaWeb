@@ -75,7 +75,9 @@ class BranchProductController extends Controller
             'unit' => $item->productBase->uom->abbreviation ?? 'N/A',
             'price' => $item->price,
             'stock' => $item->stock,
-            'image' => $item->productBase->images->first()?->path,
+            'branch_image' => $item->image_path,
+            'catalog_image' => $item->productBase->images->first()?->path,
+            'image' => $item->image_path ?? $item->productBase->images->first()?->path,
             'updated_at' => $item->updated_at->format('d/m/Y'),
             'created_at' => $item->created_at->format('d/m/Y')
         ]);
@@ -224,7 +226,7 @@ class BranchProductController extends Controller
     }
 
     /**
-     * Update product image
+     * Update branch-specific product image (not catalog image)
      */
     public function updateImage(Sucursal $sucursal, ProductBaseBranch $pivot, Request $request)
     {
@@ -237,24 +239,40 @@ class BranchProductController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        $productBase = $pivot->productBase;
-
-        // Eliminar imagen anterior si existe
-        $oldImage = $productBase->images()->where('is_primary', true)->first();
-        if ($oldImage) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage->path);
-            $oldImage->delete();
+        // Eliminar imagen anterior de sucursal si existe
+        if ($pivot->image_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($pivot->image_path);
         }
 
-        // Guardar nueva imagen
-        $path = $request->file('image')->store('product-images', 'public');
-        $productBase->images()->create([
-            'path' => $path,
-            'is_primary' => true,
-            'sort_order' => 0,
-        ]);
+        // Guardar nueva imagen específica de sucursal
+        $path = $request->file('image')->store(
+            'branch-products/' . $sucursal->id,
+            'public'
+        );
 
-        return back()->with('success', 'Imagen actualizada correctamente');
+        $pivot->image_path = $path;
+        $pivot->save();
+
+        return back()->with('success', 'Imagen de sucursal actualizada correctamente');
+    }
+
+    /**
+     * Delete branch-specific product image (revert to catalog image)
+     */
+    public function destroyImage(Sucursal $sucursal, ProductBaseBranch $pivot)
+    {
+        $this->authorize('manage', $sucursal);
+
+        // Verificar que el pivot pertenece a la sucursal
+        abort_unless($pivot->branch_id === $sucursal->id, 403);
+
+        if ($pivot->image_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($pivot->image_path);
+            $pivot->image_path = null;
+            $pivot->save();
+        }
+
+        return back()->with('success', 'Imagen personalizada eliminada. Ahora se mostrará la imagen del catálogo.');
     }
 
     /**
