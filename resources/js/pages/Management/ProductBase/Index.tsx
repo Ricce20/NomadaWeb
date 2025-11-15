@@ -1,8 +1,8 @@
 import AppLayoutManagement from '@/layouts/app-layout-management';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import management from '@/routes/management';
 import { useEffect, useState } from 'react';
-import ConfirmModal from '@/components/ConfirmModal';
+import ConfirmWithPasswordModal from '@/components/ConfirmWithPasswordModal';
 import FlashMessage from '@/components/FlashMessage';
 
 interface Brand { id: number; name: string }
@@ -36,6 +36,9 @@ export default function Index({ items, filters }: Props) {
     isOpen: false,
     item: null,
   });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { props } = usePage<any>();
+  const passwordError = props.errors?.password;
 
   // keep URL query in sync after small debounce
   useEffect(() => {
@@ -53,9 +56,19 @@ export default function Index({ items, filters }: Props) {
     return () => clearTimeout(t);
   }, [search]); // filters.search NO debe estar en dependencias
 
-  const handleDelete = () => {
+  const handleDelete = (password: string) => {
     if (!deleteModal.item) return;
-    router.delete(management.productBases.destroy.url(deleteModal.item.id));
+    setIsDeleting(true);
+    router.delete(management.productBases.destroy.url(deleteModal.item.id), {
+      data: { password },
+      preserveScroll: true,
+      onSuccess: () => {
+        setDeleteModal({ isOpen: false, item: null });
+      },
+      onFinish: () => {
+        setIsDeleting(false);
+      },
+    });
   };
 
   return (
@@ -186,14 +199,15 @@ export default function Index({ items, filters }: Props) {
         )}
       </div>
 
-      <ConfirmModal
+      <ConfirmWithPasswordModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, item: null })}
         onConfirm={handleDelete}
-        title="Eliminar producto"
-        message={`¿Estás seguro de eliminar "${deleteModal.item?.name}"? Esta acción se puede revertir.`}
+        title="Eliminar producto del catálogo"
+        message={`¿Seguro que deseas eliminar "${deleteModal.item?.name}" del catálogo global? Esta acción solo puede realizarla un super_admin.`}
         confirmText="Eliminar"
-        variant="danger"
+        error={passwordError}
+        isLoading={isDeleting}
       />
     </AppLayoutManagement>
   );

@@ -1,24 +1,11 @@
 import AppLayoutManagement from '@/layouts/app-layout-management';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import management from '@/routes/management';
-import { useEffect, useMemo, useState } from 'react';
-import ConfirmModal from '@/components/ConfirmModal';
+import { useMemo, useState } from 'react';
+import ConfirmWithPasswordModal from '@/components/ConfirmWithPasswordModal';
 import ValidationErrors from '@/components/ValidationErrors';
 import FlashMessage from '@/components/FlashMessage';
-
-type BranchPivot = {
-  id?: number;
-  branch_id?: number;
-  price?: number;
-  cost?: number | null;
-  tax_rate?: number | null;
-  status?: 'listed' | 'hidden' | 'archived';
-  min_stock?: number | null;
-  max_stock?: number | null;
-  reorder_point?: number | null;
-  barcode_override?: string | null;
-  note?: string | null;
-};
+import ProductBaseForm from './Parts/ProductBaseForm';
 
 type Item = {
   id: number;
@@ -31,45 +18,29 @@ type Item = {
   uom?: { id: number; name: string } | null;
   barcodes?: Array<{ id: number; barcode: string }>;
   images?: Array<{ id: number; path: string; is_primary?: boolean; sort_order?: number }>;
-  branches?: Array<{ id: number; name?: string; pivot?: BranchPivot }>;
+  tax_code?: string;
+  specs_json?: Record<string, string> | null;
 };
 
-interface PageProps {
-  item: Item;
+interface Catalogs {
+  brands: Array<{ id: number; name: string }>;
+  categories: Array<{ id: number; name: string }>;
+  uoms: Array<{ id: number; name: string; abbreviation: string }>;
 }
 
-// Optional dynamic parts loading to avoid crashes if missing
-// soportar ambas ubicaciones de carpeta por discrepancia Pages/pages
-const parts = import.meta.glob(['./Parts/*.tsx', '../../../Pages/Management/ProductBase/Parts/*.tsx']);
+interface PageProps {
+  mode: 'edit';
+  item: Item;
+  catalogs: Catalogs;
+}
 
-export default function Edit({ item }: PageProps) {
-  const [ProductBaseFormComp, setProductBaseFormComp] = useState<any>(null);
-  const [ImageUploaderComp, setImageUploaderComp] = useState<any>(null);
-  const [PricingTableComp, setPricingTableComp] = useState<any>(null);
-  const [tab, setTab] = useState<'general' | 'images' | 'pricing'>('general');
+export default function Edit() {
+  const { props } = usePage<any>();
+  const { mode = 'edit', item, catalogs } = props as PageProps;
+  
   const [deleteModal, setDeleteModal] = useState(false);
-  const { props } = usePage();
-
-  useEffect(() => {
-    // Load ProductBaseForm if available
-    if (parts['./Parts/ProductBaseForm.tsx']) {
-      parts['./Parts/ProductBaseForm.tsx']().then((m: any) => {
-        setProductBaseFormComp(m.default || m.ProductBaseForm || null);
-      });
-    }
-    // Load ImageUploader if available
-    if (parts['./Parts/ImageUploader.tsx']) {
-      parts['./Parts/ImageUploader.tsx']().then((m: any) => {
-        setImageUploaderComp(m.default || m.ImageUploader || null);
-      });
-    }
-    // Load PricingTable if available
-    if (parts['./Parts/PricingTable.tsx']) {
-      parts['./Parts/PricingTable.tsx']().then((m: any) => {
-        setPricingTableComp(m.default || m.PricingTable || null);
-      });
-    }
-  }, []);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const passwordError = props.errors?.password;
 
   const statusChip = useMemo(() => (
     <span
@@ -83,10 +54,16 @@ export default function Edit({ item }: PageProps) {
     </span>
   ), [item.is_active]);
 
-  const handleDelete = () => {
+  const handleDelete = (password: string) => {
+    setIsDeleting(true);
     router.delete(management.productBases.destroy.url(item.id), {
+      data: { password },
+      preserveScroll: true,
       onSuccess: () => {
         router.visit(management.productBases.index.url());
+      },
+      onFinish: () => {
+        setIsDeleting(false);
       },
     });
   };
@@ -100,7 +77,10 @@ export default function Edit({ item }: PageProps) {
   };
 
   return (
-    <AppLayoutManagement breadcrumbs={[{ title: 'Productos', href: management.productBases.index.url() }, { title: item.name, href: management.productBases.edit.url(item.id) }]}> 
+    <AppLayoutManagement breadcrumbs={[
+      { title: 'Productos', href: management.productBases.index.url() }, 
+      { title: item.name, href: management.productBases.edit.url(item.id) }
+    ]}> 
       <Head title={`Editar: ${item.name}`} />
 
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
@@ -156,98 +136,26 @@ export default function Edit({ item }: PageProps) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b">
-          <div className="flex gap-1">
-            <button
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
-                tab === 'general' 
-                  ? 'border-b-2 border-primary bg-background text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => setTab('general')}
-            >
-              Datos generales
-            </button>
-            <button
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
-                tab === 'images' 
-                  ? 'border-b-2 border-primary bg-background text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => setTab('images')}
-            >
-              Imágenes
-            </button>
-            <button
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
-                tab === 'pricing' 
-                  ? 'border-b-2 border-primary bg-background text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => setTab('pricing')}
-            >
-              Precios por sucursal
-            </button>
-          </div>
+        {/* Formulario */}
+        <div className="rounded-md border bg-card p-6">
+          <ProductBaseForm 
+            mode={mode} 
+            initialValues={item} 
+            catalogs={catalogs}
+          />
         </div>
-
-        {tab === 'general' && (
-          <div className="rounded-md border bg-card p-6">
-          {ProductBaseFormComp ? (
-            <ProductBaseFormComp
-              mode="edit"
-              initialValues={item}
-              onSubmit={(payload: any) =>
-                router.put(management.productBases.update.url(item.id), payload)
-              }
-            />
-          ) : (
-            <div className="text-sm text-muted-foreground">ProductBaseForm no disponible todavía. Placeholder.</div>
-          )}
-        </div>
-      )}
-
-        {tab === 'images' && (
-          <div className="rounded-md border bg-card p-6">
-            {ImageUploaderComp ? (
-              <ImageUploaderComp productId={item.id} images={item.images || []} />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <svg className="mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-sm">ImageUploader no disponible todavía</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === 'pricing' && (
-          <div className="rounded-md border bg-card p-6">
-            {PricingTableComp ? (
-              <PricingTableComp productId={item.id} initialRows={item.branches || []} />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <svg className="mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm">PricingTable no disponible todavía</p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
-        <ConfirmModal
-          isOpen={deleteModal}
-          onClose={() => setDeleteModal(false)}
-          onConfirm={handleDelete}
-          title="Eliminar producto"
-          message={`¿Estás seguro de eliminar "${item.name}"? Esta acción se puede revertir.`}
-          confirmText="Eliminar"
-          variant="danger"
-        />
-      </AppLayoutManagement>
-    );
-  }
+      <ConfirmWithPasswordModal
+        isOpen={deleteModal}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Eliminar producto del catálogo"
+        message={`¿Seguro que deseas eliminar "${item.name}" del catálogo global? Esta acción solo puede realizarla un super_admin.`}
+        confirmText="Eliminar"
+        error={passwordError}
+        isLoading={isDeleting}
+      />
+    </AppLayoutManagement>
+  );
+}

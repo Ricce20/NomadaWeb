@@ -30,7 +30,14 @@ class ProductBaseController
 
     public function create()
     {
-        return Inertia::render('Management/ProductBase/Create');
+        return Inertia::render('Management/ProductBase/Create', [
+            'mode' => 'create',
+            'catalogs' => [
+                'brands' => \App\Models\Brand::select('id', 'name')->orderBy('name')->get(),
+                'categories' => \App\Models\Category::select('id', 'name')->orderBy('name')->get(),
+                'uoms' => \App\Models\Unit::select('id', 'name', 'abbreviation')->orderBy('name')->get(),
+            ],
+        ]);
     }
 
     public function store(StoreUpdateProductBaseRequest $req)
@@ -72,7 +79,13 @@ class ProductBaseController
     public function edit(ProductBase $product_base)
     {
         return Inertia::render('Management/ProductBase/Edit', [
+            'mode' => 'edit',
             'item' => $product_base->load(['brand', 'category', 'uom', 'barcodes', 'images']),
+            'catalogs' => [
+                'brands' => \App\Models\Brand::select('id', 'name')->orderBy('name')->get(),
+                'categories' => \App\Models\Category::select('id', 'name')->orderBy('name')->get(),
+                'uoms' => \App\Models\Unit::select('id', 'name', 'abbreviation')->orderBy('name')->get(),
+            ],
         ]);
     }
 
@@ -82,12 +95,27 @@ class ProductBaseController
         return back()->with('ok', 'Producto actualizado');
     }
 
-    public function destroy(ProductBase $product_base)
+    public function destroy(Request $request, ProductBase $product_base)
     {
+        // Validar que sea super_admin
+        if ($request->user()->type !== 'super_admin') {
+            return back()->withErrors(['error' => 'Solo super_admin puede eliminar productos del catálogo']);
+        }
+
+        // Validar contraseña
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $request->user()->password)) {
+            return back()->withErrors(['password' => 'La contraseña es incorrecta']);
+        }
+
         $product_base->delete();
+        
         return redirect()
             ->route('management.product-bases.index')
-            ->with('ok', 'Producto eliminado');
+            ->with('ok', 'Producto eliminado correctamente');
     }
 
     // Media
