@@ -39,6 +39,11 @@ export default function Index({ items, filters }: Props) {
 
   // keep URL query in sync after small debounce
   useEffect(() => {
+    // Solo navegar si el search cambió respecto al filtro actual
+    if (search === (filters?.search ?? '')) {
+      return; // No hacer nada si es igual
+    }
+
     const t = setTimeout(() => {
       router.get(
         management.productBases.index.url({ query: { search } }),
@@ -46,7 +51,7 @@ export default function Index({ items, filters }: Props) {
       );
     }, 300);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [search]); // filters.search NO debe estar en dependencias
 
   const handleDelete = () => {
     if (!deleteModal.item) return;
@@ -57,110 +62,129 @@ export default function Index({ items, filters }: Props) {
     <AppLayoutManagement breadcrumbs={[{ title: 'Productos', href: management.productBases.index.url() }]}>
       <Head title="Productos" />
       
-      <FlashMessage />
+      <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+        <FlashMessage />
 
-      <div className="flex items-center justify-between mb-4">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre o SKU"
-          className="border rounded px-3 py-2 w-full max-w-md dark:bg-neutral-800 dark:border-neutral-600"
-        />
-        <Link
-          href={management.productBases.create.url()}
-          className="ml-4 inline-flex items-center rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black"
-        >
-          Nuevo
-        </Link>
-      </div>
-
-      <div className="overflow-x-auto border rounded dark:border-neutral-700">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-muted">
-              <th className="p-2 text-left">SKU</th>
-              <th className="p-2 text-left">Nombre</th>
-              <th className="p-2 text-left">Marca</th>
-              <th className="p-2 text-left">Categoría</th>
-              <th className="p-2 text-left">UoM</th>
-              <th className="p-2 text-left">Activo</th>
-              <th className="p-2 text-left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.data.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-neutral-500">
-                  No se encontraron productos
-                </td>
-              </tr>
-            ) : (
-              items.data.map((it) => (
-                <tr key={it.id} className="border-t dark:border-neutral-700">
-                  <td className="p-2">{it.sku_base}</td>
-                  <td className="p-2">{it.name}</td>
-                  <td className="p-2">{it.brand?.name ?? '-'}</td>
-                  <td className="p-2">{it.category?.name ?? '-'}</td>
-                  <td className="p-2">{it.uom?.name ?? '-'}</td>
-                  <td className="p-2">
-                    <span
-                      className={`inline-flex items-center rounded px-2 py-1 text-xs ${
-                        it.is_active
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200'
-                      }`}
-                    >
-                      {it.is_active ? 'Sí' : 'No'}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <div className="flex gap-2">
-                      <Link
-                        href={management.productBases.edit.url(it.id)}
-                        className="text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        Editar
-                      </Link>
-                      <button
-                        onClick={() => setDeleteModal({ isOpen: true, item: it })}
-                        className="text-red-600 hover:underline dark:text-red-400"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Paginación */}
-      {items.last_page > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-neutral-600 dark:text-neutral-400">
-            Mostrando {items.data.length} de {items.total} productos
+        {/* Header con búsqueda y botón */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 max-w-md">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre o SKU..."
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
           </div>
-          <div className="flex gap-1">
-            {items.links.map((link, index) => (
-              <Link
-                key={index}
-                href={link.url || '#'}
-                preserveState
-                className={`px-3 py-1 rounded text-sm ${
-                  link.active
-                    ? 'bg-black text-white dark:bg-white dark:text-black'
-                    : link.url
-                    ? 'border hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800'
-                    : 'text-neutral-400 cursor-not-allowed'
-                }`}
-                dangerouslySetInnerHTML={{ __html: link.label }}
-              />
-            ))}
+          <Link
+            href={management.productBases.create.url()}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo Producto
+          </Link>
+        </div>
+
+        {/* Tabla de productos */}
+        <div className="rounded-md border bg-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">SKU</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nombre</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Marca</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Categoría</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">UoM</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Estado</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.data.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="h-24 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <svg className="mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p className="text-sm">No se encontraron productos</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  items.data.map((it) => (
+                    <tr key={it.id} className="border-b transition-colors hover:bg-muted/50">
+                      <td className="p-4 align-middle">
+                        <span className="font-mono text-xs">{it.sku_base}</span>
+                      </td>
+                      <td className="p-4 align-middle font-medium">{it.name}</td>
+                      <td className="p-4 align-middle text-muted-foreground">{it.brand?.name ?? '-'}</td>
+                      <td className="p-4 align-middle text-muted-foreground">{it.category?.name ?? '-'}</td>
+                      <td className="p-4 align-middle text-muted-foreground">{it.uom?.name ?? '-'}</td>
+                      <td className="p-4 align-middle">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            it.is_active
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                          }`}
+                        >
+                          {it.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="p-4 align-middle">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={management.productBases.edit.url(it.id)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            Editar
+                          </Link>
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: true, item: it })}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium text-destructive underline-offset-4 hover:underline"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {/* Paginación */}
+        {items.last_page > 1 && (
+          <div className="flex items-center justify-between px-2">
+            <div className="text-sm text-muted-foreground">
+              Mostrando <span className="font-medium">{items.data.length}</span> de{' '}
+              <span className="font-medium">{items.total}</span> productos
+            </div>
+            <div className="flex items-center gap-1">
+              {items.links.map((link, index) => (
+                <Link
+                  key={index}
+                  href={link.url || '#'}
+                  preserveState
+                  className={`inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-md px-3 text-sm font-medium transition-colors ${
+                    link.active
+                      ? 'bg-primary text-primary-foreground shadow'
+                      : link.url
+                      ? 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
+                      : 'pointer-events-none opacity-50'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <ConfirmModal
         isOpen={deleteModal.isOpen}

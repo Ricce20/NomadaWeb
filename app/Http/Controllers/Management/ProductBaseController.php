@@ -91,14 +91,52 @@ class ProductBaseController
     }
 
     // Media
-    public function imagesStore(ProductBase $product)
+    public function imagesStore(ProductBase $product, Request $req)
     {
-        return response()->json(['ok' => true, 'resource' => 'product-bases.images.store', 'id' => $product->id]);
+        $req->validate([
+            'images' => ['required', 'array', 'min:1'],
+            'images.*' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+        ]);
+
+        $uploaded = [];
+        $currentMaxOrder = $product->images()->max('sort_order') ?? -1;
+
+        foreach ($req->file('images') as $index => $file) {
+            // Crear directorio específico para el producto
+            $directory = "product-images/{$product->id}";
+            $path = $file->store($directory, 'public');
+
+            $image = $product->images()->create([
+                'path' => $path,
+                'is_primary' => $product->images()->count() === 0 && $index === 0,
+                'sort_order' => $currentMaxOrder + $index + 1,
+            ]);
+
+            $uploaded[] = $image;
+        }
+
+        return back()->with('ok', count($uploaded) . ' imagen(es) subida(s) correctamente');
     }
 
     public function imagesDestroy(ProductBase $product, int $image)
     {
-        return response()->json(['ok' => true, 'resource' => 'product-bases.images.destroy', 'id' => $product->id, 'image' => $image]);
+        $img = $product->images()->findOrFail($image);
+        
+        // Eliminar archivo físico
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($img->path);
+        
+        // Si era la imagen principal, asignar otra como principal
+        $wasPrimary = $img->is_primary;
+        $img->delete();
+
+        if ($wasPrimary) {
+            $nextImage = $product->images()->orderBy('sort_order')->first();
+            if ($nextImage) {
+                $nextImage->update(['is_primary' => true]);
+            }
+        }
+
+        return back()->with('ok', 'Imagen eliminada correctamente');
     }
 
     // DEPRECATED: Pricing management moved to Ownership

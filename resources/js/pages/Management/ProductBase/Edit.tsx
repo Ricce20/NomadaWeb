@@ -103,75 +103,97 @@ export default function Edit({ item }: PageProps) {
     <AppLayoutManagement breadcrumbs={[{ title: 'Productos', href: management.productBases.index.url() }, { title: item.name, href: management.productBases.edit.url(item.id) }]}> 
       <Head title={`Editar: ${item.name}`} />
 
-      <FlashMessage />
-      <ValidationErrors />
+      <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+        <FlashMessage />
+        <ValidationErrors />
 
-      {/* Banner de producto eliminado */}
-      {item.deleted_at && (
-        <div className="mb-4 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-yellow-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                Este producto está eliminado. Puedes restaurarlo o eliminarlo permanentemente.
-              </p>
+        {/* Banner de producto eliminado */}
+        {item.deleted_at && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Este producto está eliminado. Puedes restaurarlo o eliminarlo permanentemente.
+                </p>
+              </div>
+              <button
+                onClick={handleRestore}
+                className="inline-flex items-center justify-center rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-700"
+              >
+                Restaurar
+              </button>
             </div>
-            <button
-              onClick={handleRestore}
-              className="ml-4 rounded bg-yellow-600 px-3 py-1 text-sm text-white hover:bg-yellow-700"
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">SKU: {item.sku_base}</span>
+              {statusChip}
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight">{item.name}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link 
+              href={management.productBases.index.url()} 
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              Restaurar
+              Volver
+            </Link>
+            {!item.deleted_at && (
+              <button 
+                onClick={() => setDeleteModal(true)} 
+                className="inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/90"
+              >
+                Eliminar
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b">
+          <div className="flex gap-1">
+            <button
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
+                tab === 'general' 
+                  ? 'border-b-2 border-primary bg-background text-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setTab('general')}
+            >
+              Datos generales
+            </button>
+            <button
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
+                tab === 'images' 
+                  ? 'border-b-2 border-primary bg-background text-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setTab('images')}
+            >
+              Imágenes
+            </button>
+            <button
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-4 py-2 text-sm font-medium transition-all ${
+                tab === 'pricing' 
+                  ? 'border-b-2 border-primary bg-background text-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setTab('pricing')}
+            >
+              Precios por sucursal
             </button>
           </div>
         </div>
-      )}
 
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <div className="text-sm text-muted-foreground">SKU: {item.sku_base}</div>
-          <h1 className="text-xl font-semibold">{item.name}</h1>
-          <div className="mt-1">{statusChip}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={management.productBases.index.url()} className="rounded border px-3 py-1 dark:border-neutral-600">Volver</Link>
-          {!item.deleted_at && (
-            <button 
-              onClick={() => setDeleteModal(true)} 
-              className="rounded bg-red-600 px-3 py-1 text-white dark:bg-red-500"
-            >
-              Eliminar
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs simples */}
-      <div className="mb-4 flex gap-2">
-        <button
-          className={`rounded px-3 py-1 ${tab === 'general' ? 'bg-black text-white dark:bg-white dark:text-black' : 'border'}`}
-          onClick={() => setTab('general')}
-        >
-          Datos generales
-        </button>
-        <button
-          className={`rounded px-3 py-1 ${tab === 'images' ? 'bg-black text-white dark:bg-white dark:text-black' : 'border'}`}
-          onClick={() => setTab('images')}
-        >
-          Imágenes
-        </button>
-        <button
-          className={`rounded px-3 py-1 ${tab === 'pricing' ? 'bg-black text-white dark:bg-white dark:text-black' : 'border'}`}
-          onClick={() => setTab('pricing')}
-        >
-          Precios por sucursal
-        </button>
-      </div>
-
-      {tab === 'general' && (
-        <div className="rounded border p-4 dark:border-neutral-700">
+        {tab === 'general' && (
+          <div className="rounded-md border bg-card p-6">
           {ProductBaseFormComp ? (
             <ProductBaseFormComp
               mode="edit"
@@ -186,35 +208,46 @@ export default function Edit({ item }: PageProps) {
         </div>
       )}
 
-      {tab === 'images' && (
-        <div className="rounded border p-4 dark:border-neutral-700">
-          {ImageUploaderComp ? (
-            <ImageUploaderComp productId={item.id} images={item.images || []} />
-          ) : (
-            <div className="text-sm text-muted-foreground">ImageUploader no disponible todavía. Placeholder.</div>
-          )}
-        </div>
-      )}
+        {tab === 'images' && (
+          <div className="rounded-md border bg-card p-6">
+            {ImageUploaderComp ? (
+              <ImageUploaderComp productId={item.id} images={item.images || []} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <svg className="mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm">ImageUploader no disponible todavía</p>
+              </div>
+            )}
+          </div>
+        )}
 
-      {tab === 'pricing' && (
-        <div className="rounded border p-4 dark:border-neutral-700">
-          {PricingTableComp ? (
-            <PricingTableComp productId={item.id} initialRows={item.branches || []} />
-          ) : (
-            <div className="text-sm text-muted-foreground">PricingTable no disponible todavía. Placeholder.</div>
-          )}
-        </div>
-      )}
+        {tab === 'pricing' && (
+          <div className="rounded-md border bg-card p-6">
+            {PricingTableComp ? (
+              <PricingTableComp productId={item.id} initialRows={item.branches || []} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <svg className="mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm">PricingTable no disponible todavía</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-      <ConfirmModal
-        isOpen={deleteModal}
-        onClose={() => setDeleteModal(false)}
-        onConfirm={handleDelete}
-        title="Eliminar producto"
-        message={`¿Estás seguro de eliminar "${item.name}"? Esta acción se puede revertir.`}
-        confirmText="Eliminar"
-        variant="danger"
-      />
-    </AppLayoutManagement>
-  );
-}
+        <ConfirmModal
+          isOpen={deleteModal}
+          onClose={() => setDeleteModal(false)}
+          onConfirm={handleDelete}
+          title="Eliminar producto"
+          message={`¿Estás seguro de eliminar "${item.name}"? Esta acción se puede revertir.`}
+          confirmText="Eliminar"
+          variant="danger"
+        />
+      </AppLayoutManagement>
+    );
+  }

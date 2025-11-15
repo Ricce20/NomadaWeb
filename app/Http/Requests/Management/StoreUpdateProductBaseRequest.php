@@ -10,10 +10,9 @@ class StoreUpdateProductBaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Permitir temporalmente a propietarios (owner) gestionar Product Base
-        // También mantener acceso para super_admin si existe
+        // Solo super_admin puede gestionar ProductBase en management
         return $this->user() instanceof User
-            && in_array($this->user()->type, [User::TYPE_OWNER, User::TYPE_SUPER_ADMIN], true);
+            && $this->user()->type === User::TYPE_SUPER_ADMIN;
     }
 
     public function rules(): array
