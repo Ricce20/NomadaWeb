@@ -24,8 +24,13 @@ interface ProductBase {
   name: string;
   sku_base: string;
   brand: string;
+  brand_id: number;
   category: string;
+  category_id: number;
   unit: string;
+  unit_name: string;
+  image?: string;
+  tax_code?: string;
 }
 
 interface Brand {
@@ -105,6 +110,13 @@ export default function AddProductModal({
     }
   }, [open, brands, categories, units]);
 
+  // Cargar productos iniciales cuando se abre el tab de búsqueda
+  useEffect(() => {
+    if (open && tab === "buscar" && searchResults.length === 0 && !selectedProduct && searchTerm === "") {
+      handleSearch();
+    }
+  }, [open, tab]);
+
   useEffect(() => {
     if (searchTerm.length >= 2) {
       const delayDebounceFn = setTimeout(() => {
@@ -112,23 +124,41 @@ export default function AddProductModal({
       }, 300);
 
       return () => clearTimeout(delayDebounceFn);
-    } else {
-      setSearchResults([]);
+    } else if (searchTerm.length === 0 && tab === "buscar") {
+      // Si borra el término, recargar lista inicial
+      handleSearch();
     }
   }, [searchTerm]);
 
   const handleSearch = async () => {
     setIsSearching(true);
+    console.log('🔍 Searching products...', {
+      sucursalId,
+      searchTerm,
+      url: `/sucursales/${sucursalId}/productos/catalogo`,
+    });
+    
     try {
-      const response = await axios.get("/api/product-bases/search", {
+      const response = await axios.get(`/sucursales/${sucursalId}/productos/catalogo`, {
         params: {
-          term: searchTerm,
-          exclude_sucursal_id: sucursalId,
+          search: searchTerm,
+          exclude_added: true,
         },
       });
-      setSearchResults(response.data);
+      
+      console.log('✅ Search response:', {
+        status: response.status,
+        data: response.data,
+        dataLength: response.data.data?.length || 0,
+      });
+      
+      setSearchResults(response.data.data || []);
     } catch (error) {
-      console.error("Error searching products:", error);
+      console.error("❌ Error searching products:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+      }
       toast.error("Error al buscar productos");
     } finally {
       setIsSearching(false);
@@ -162,7 +192,7 @@ export default function AddProductModal({
     setIsSubmitting(true);
 
     router.post(
-      productos.store(sucursalId).url,
+      `/sucursales/${sucursalId}/productos/from-catalog`,
       {
         product_base_id: selectedProduct.id,
         price: parseFloat(price),
@@ -171,7 +201,7 @@ export default function AddProductModal({
       {
         preserveScroll: true,
         onSuccess: () => {
-          toast.success("Producto agregado correctamente");
+          toast.success("Producto agregado desde el catálogo");
           onClose();
         },
         onError: (errors) => {
@@ -290,18 +320,41 @@ export default function AddProductModal({
                 )}
 
                 {!isSearching && searchResults.length > 0 && (
-                  <ScrollArea className="h-[200px] rounded-md border">
-                    <div className="p-2">
+                  <ScrollArea className="h-[300px] rounded-md border">
+                    <div className="p-2 space-y-2">
                       {searchResults.map((product) => (
                         <button
                           key={product.id}
                           type="button"
                           onClick={() => handleSelectProduct(product)}
-                          className="w-full text-left px-3 py-2 hover:bg-muted transition-colors rounded-md mb-1"
+                          className="w-full text-left px-3 py-3 hover:bg-muted transition-colors rounded-md border flex gap-3 items-start"
                         >
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            SKU: {product.sku_base} • {product.brand} • {product.category}
+                          {/* Imagen del producto */}
+                          <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                            {product.image ? (
+                              <img 
+                                src={`/storage/${product.image}`} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          
+                          {/* Información del producto */}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              SKU: {product.sku_base}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex gap-2 mt-1">
+                              <span>{product.brand}</span>
+                              <span>•</span>
+                              <span>{product.category}</span>
+                              <span>•</span>
+                              <span>{product.unit}</span>
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -321,21 +374,42 @@ export default function AddProductModal({
             {selectedProduct && (
               <>
                 <div className="rounded-md border p-4 bg-muted/50">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">{selectedProduct.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        SKU: {selectedProduct.sku_base} • {selectedProduct.brand} • {selectedProduct.category}
+                  <div className="flex gap-3">
+                    {/* Imagen del producto seleccionado */}
+                    <div className="flex-shrink-0 w-20 h-20 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                      {selectedProduct.image ? (
+                        <img 
+                          src={`/storage/${selectedProduct.image}`} 
+                          alt={selectedProduct.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    
+                    {/* Información */}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">{selectedProduct.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            SKU: {selectedProduct.sku_base}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {selectedProduct.brand} • {selectedProduct.category} • {selectedProduct.unit}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedProduct(null)}
+                        >
+                          Cambiar
+                        </Button>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedProduct(null)}
-                    >
-                      Cambiar
-                    </Button>
                   </div>
                 </div>
 

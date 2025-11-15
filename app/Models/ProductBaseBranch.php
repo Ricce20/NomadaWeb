@@ -12,16 +12,17 @@ class ProductBaseBranch extends Model
 
     protected $fillable = [
         'product_base_id',
-        'sucursal_id',
+        'branch_id',
         'price',
         'stock',
+        'sale_type',
     ];
 
     protected $casts = [
         'price' => 'decimal:2', // JSON devolverá "120.00" (string) por diseño de Laravel
         'stock' => 'integer',
         'product_base_id' => 'integer',
-        'sucursal_id' => 'integer',
+        'branch_id' => 'integer',
     ];
 
     public function productBase()
@@ -29,8 +30,14 @@ class ProductBaseBranch extends Model
         return $this->belongsTo(ProductBase::class, 'product_base_id');
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Sucursal::class, 'branch_id');
+    }
+    
+    // Alias para compatibilidad
     public function sucursal()
     {
-        return $this->belongsTo(Sucursal::class, 'sucursal_id');
+        return $this->branch();
     }
 }

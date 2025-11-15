@@ -12,6 +12,7 @@ use App\Models\Sucursal;
 use App\Models\Unit;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class BranchProductController extends Controller
@@ -26,7 +27,7 @@ class BranchProductController extends Controller
 
         // Query con joins
         $query = ProductBaseBranch::query()
-            ->where('sucursal_id', $sucursal->id)
+            ->where('branch_id', $sucursal->id)
             ->with([
                 'productBase.brand',
                 'productBase.category',
@@ -112,11 +113,12 @@ class BranchProductController extends Controller
         $pivot = ProductBaseBranch::firstOrCreate(
             [
                 'product_base_id' => $validated['product_base_id'],
-                'sucursal_id' => $sucursal->id,
+                'branch_id' => $sucursal->id,
             ],
             [
                 'price' => $validated['price'],
                 'stock' => $validated['stock'] ?? 0,
+                'sale_type' => 'unit', // Default: venta por unidad
             ]
         );
 
@@ -135,7 +137,7 @@ class BranchProductController extends Controller
         // Authorization handled by FormRequest
 
         // Verificar que el pivot pertenece a la sucursal
-        abort_unless($pivot->sucursal_id === $sucursal->id, 403);
+        abort_unless($pivot->branch_id === $sucursal->id, 403);
 
         $data = $request->only(['price', 'stock']);
         // Evita tocar campos no enviados:
@@ -159,7 +161,7 @@ class BranchProductController extends Controller
         $this->authorize('manageProducts', $sucursal);
 
         // Verificar que el pivot pertenece a la sucursal
-        if ($pivot->sucursal_id !== $sucursal->id) {
+        if ($pivot->branch_id !== $sucursal->id) {
             abort(403, 'Este producto no pertenece a la sucursal especificada.');
         }
 
@@ -209,8 +211,12 @@ class BranchProductController extends Controller
             }
 
             ProductBaseBranch::firstOrCreate(
-                ['product_base_id' => $base->id, 'sucursal_id' => $sucursal->id],
-                ['price' => (float) $request->input('price'), 'stock' => (int) $request->input('stock')]
+                ['product_base_id' => $base->id, 'branch_id' => $sucursal->id],
+                [
+                    'price' => (float) $request->input('price'),
+                    'stock' => (int) $request->input('stock'),
+                    'sale_type' => 'unit', // Default: venta por unidad
+                ]
             );
         });
 
@@ -225,7 +231,7 @@ class BranchProductController extends Controller
         $this->authorize('manage', $sucursal);
 
         // Verificar que el pivot pertenece a la sucursal
-        abort_unless($pivot->sucursal_id === $sucursal->id, 403);
+        abort_unless($pivot->branch_id === $sucursal->id, 403);
 
         $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -251,5 +257,144 @@ class BranchProductController extends Controller
         return back()->with('success', 'Imagen actualizada correctamente');
     }
 
+    /**
+     * Get catalog of available products for the branch
+     */
+    public function catalog(Sucursal $sucursal, Request $request)
+    {
+        $this->authorize('viewProducts', $sucursal);
+
+        Log::info('Catalog request', [
+            'sucursal_id' => $sucursal->id,
+            'search' => $request->get('search'),
+            'exclude_added' => $request->boolean('exclude_added', true),
+        ]);
+
+        $query = \App\Models\ProductBase::query()
+            ->with([
+                'brand:id,name',
+                'category:id,name',
+                'uom:id,name,abbreviation',
+                'images' => function ($q) {
+                    // Solo cargar la imagen principal, sin usar orWhereRaw que causa problemas
+                    $q->where('is_primary', true)
+                      ->orderBy('sort_order')
+                      ->limit(1);
+                }
+            ])
+            ->where('is_active', true)
+            ->where('approval_status', 'approved');
+
+        // Filtrar por búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku_base', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtrar por marca
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        // Filtrar por categoría
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Excluir productos ya agregados a esta sucursal (opcional)
+        if ($request->boolean('exclude_added', true)) {
+            $existingIds = ProductBaseBranch::where('branch_id', $sucursal->id)
+                ->pluck('product_base_id')
+                ->toArray();
+            
+            if (!empty($existingIds)) {
+                $query->whereNotIn('id', $existingIds);
+            }
+        }
+
+        // Obtener productos sin paginar primero para evitar problemas con laravel_row
+        $products = $query->orderBy('name')->get();
+        
+        // Transformar manualmente
+        $data = $products->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'sku_base' => $item->sku_base,
+                'brand' => $item->brand?->name ?? 'N/A',
+                'brand_id' => $item->brand_id,
+                'category' => $item->category?->name ?? 'N/A',
+                'category_id' => $item->category_id,
+                'unit' => $item->uom?->abbreviation ?? 'N/A',
+                'unit_name' => $item->uom?->name ?? 'N/A',
+                'image' => $item->images->first()?->path,
+                'tax_code' => $item->tax_code,
+            ];
+        });
+
+        // Paginar manualmente los resultados transformados
+        $page = $request->input('page', 1);
+        $perPage = 20;
+        $total = $data->count();
+        $items = $data->slice(($page - 1) * $perPage, $perPage)->values();
+        
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        Log::info('Catalog response', [
+            'total' => $paginator->total(),
+            'count' => $paginator->count(),
+        ]);
+
+        return response()->json($paginator);
+    }
+
+    /**
+     * Add product from catalog to branch
+     */
+    public function fromCatalog(Sucursal $sucursal, Request $request)
+    {
+        $this->authorize('manage', $sucursal);
+
+        $validated = $request->validate([
+            'product_base_id' => ['required', 'exists:product_bases,id'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+        ]);
+
+        // Verificar que el producto esté activo y aprobado
+        $productBase = \App\Models\ProductBase::findOrFail($validated['product_base_id']);
+        
+        if (!$productBase->is_active || $productBase->approval_status !== 'approved') {
+            return back()->withErrors(['error' => 'Este producto no está disponible en el catálogo']);
+        }
+
+        // Crear o actualizar el registro
+        $pivot = ProductBaseBranch::firstOrCreate(
+            [
+                'product_base_id' => $validated['product_base_id'],
+                'branch_id' => $sucursal->id,
+            ],
+            [
+                'price' => $validated['price'],
+                'stock' => $validated['stock'],
+                'sale_type' => 'unit', // Default: venta por unidad
+            ]
+        );
+
+        if ($pivot->wasRecentlyCreated) {
+            return back()->with(['success' => 'Producto agregado desde el catálogo']);
+        }
+
+        return back()->with(['error' => 'Este producto ya está registrado en esta sucursal']);
+    }
 
 }

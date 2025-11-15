@@ -334,6 +334,7 @@ export default function ProductosIndex({
                     <TableHead>Categoría</TableHead>
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
+                    <TableHead>UoM</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
                     {can.manage && <TableHead className="text-right">Acciones</TableHead>}
                   </TableRow>
@@ -368,10 +369,10 @@ export default function ProductosIndex({
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <span className="font-mono">{item.stock}</span>
-                          <span className="text-muted-foreground text-sm">{item.unit}</span>
-                        </div>
+                        <span className="font-mono">{item.stock}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{item.unit || '—'}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={item.stock > 0 ? "default" : "secondary"}>

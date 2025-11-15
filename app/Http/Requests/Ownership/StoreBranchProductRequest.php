@@ -34,7 +34,7 @@ class StoreBranchProductRequest extends FormRequest
                 function ($attribute, $value, $fail) use ($sucursalId) {
                     // Verificar unicidad (producto + sucursal)
                     $exists = ProductBaseBranch::where('product_base_id', $value)
-                        ->where('sucursal_id', $sucursalId)
+                        ->where('branch_id', $sucursalId)
                         ->exists();
 
                     if ($exists) {

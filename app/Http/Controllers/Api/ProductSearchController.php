@@ -12,7 +12,7 @@ class ProductSearchController extends Controller
     {
         $request->validate([
             'term' => 'required|string|min:2',
-            'exclude_sucursal_id' => 'nullable|integer|exists:sucursales,id',
+            'exclude_branch_id' => 'nullable|integer|exists:sucursales,id',
         ]);
 
         $query = ProductBase::query()
@@ -24,9 +24,9 @@ class ProductSearchController extends Controller
             });
 
         // Excluir productos ya asociados a una sucursal específica
-        if ($request->filled('exclude_sucursal_id')) {
+        if ($request->filled('exclude_branch_id')) {
             $query->whereDoesntHave('prices', function ($q) use ($request) {
-                $q->where('sucursal_id', $request->exclude_sucursal_id);
+                $q->where('branch_id', $request->exclude_branch_id);
             });
         }
 

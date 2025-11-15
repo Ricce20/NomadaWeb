@@ -58,6 +58,6 @@ class Sucursal extends Model
 
     public function productos(): HasMany
     {
-        return $this->hasMany(ProductBaseBranch::class, 'sucursal_id');
+        return $this->hasMany(ProductBaseBranch::class, 'branch_id');
     }
 }

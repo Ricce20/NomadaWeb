@@ -62,7 +62,7 @@ class OnboardProductBaseBranch implements ShouldQueue
                 $pivot = ProductBaseBranch::firstOrCreate(
                     [
                         'product_base_id' => $product->id,
-                        'sucursal_id' => $sucursal->id,
+                        'branch_id' => $sucursal->id,
                     ],
                     [
                         'price' => $price,
@@ -74,7 +74,7 @@ class OnboardProductBaseBranch implements ShouldQueue
                     $created++;
                     
                     Log::info('OnboardProductBaseBranch: Pivot creado', [
-                        'sucursal_id' => $sucursal->id,
+                        'branch_id' => $sucursal->id,
                         'sucursal_nombre' => $sucursal->nombre,
                         'product_base_id' => $product->id,
                         'product_name' => $product->name,

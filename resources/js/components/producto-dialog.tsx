@@ -49,7 +49,7 @@ export default function ProductoDialog({
 
   const { data, setData, post, put, processing, errors, reset } = useForm({
     product_base_id: editingItem?.product_base_id || 0,
-    sucursal_id: sucursalId,
+    branch_id: sucursalId,
     price: editingItem?.price || "",
     stock: editingItem?.stock || 0,
   });
@@ -58,7 +58,7 @@ export default function ProductoDialog({
     if (editingItem) {
       setData({
         product_base_id: editingItem.product_base_id,
-        sucursal_id: sucursalId,
+        branch_id: sucursalId,
         price: editingItem.price,
         stock: editingItem.stock,
       });
@@ -96,7 +96,7 @@ export default function ProductoDialog({
       const response = await axios.get("/api/product-bases/search", {
         params: { 
           term: searchTerm,
-          exclude_sucursal_id: sucursalId 
+          exclude_branch_id: sucursalId 
         },
       });
       setSearchResults(response.data);

@@ -93,13 +93,15 @@ class FerreteriaProductBaseSeeder extends Seeder
             $pb = ProductBase::where('name', $p['name'])->first();
             if (!$pb) {
                 $pb = new ProductBase();
+                $pb->sku_base = 'SKU-' . strtoupper(substr(md5($p['name']), 0, 8));
                 $pb->name = $p['name'];
                 $pb->description = $p['descripcion'];
                 $pb->brand_id = $brandId;
                 $pb->category_id = $categoriasIds[$p['categoria']];
                 // Usar columna detectada dinámicamente
                 $pb->{$unitColumn} = $unidadesIds[$p['unidad']];
-                $pb->status = true;
+                $pb->is_active = true;
+                $pb->approval_status = 'approved';
                 $pb->save();
             }
 
