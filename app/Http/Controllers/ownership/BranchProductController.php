@@ -64,23 +64,28 @@ class BranchProductController extends Controller
         $sortDirection = $request->input('direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
 
-        // Paginación
-        $productos = $query->paginate(20)->withQueryString()->through(fn($item) => [
-            'id' => $item->id,
-            'product_base_id' => $item->product_base_id,
-            'name' => $item->productBase->name ?? 'N/A',
-            'sku_base' => $item->productBase->sku_base ?? 'N/A',
-            'brand' => $item->productBase->brand->name ?? 'N/A',
-            'category' => $item->productBase->category->name ?? 'N/A',
-            'unit' => $item->productBase->uom->abbreviation ?? 'N/A',
-            'price' => $item->price,
-            'stock' => $item->stock,
-            'branch_image' => $item->image_path,
-            'catalog_image' => $item->productBase->images->first()?->path,
-            'image' => $item->image_path ?? $item->productBase->images->first()?->path,
-            'updated_at' => $item->updated_at->format('d/m/Y'),
-            'created_at' => $item->created_at->format('d/m/Y')
-        ]);
+        // Paginación con protección null-safe
+        $productos = $query->paginate(20)->withQueryString()->through(function($item) {
+            $base = $item->productBase;
+            
+            return [
+                'id' => $item->id,
+                'product_base_id' => $item->product_base_id,
+                'name' => $base?->name ?? '[Producto eliminado del catálogo]',
+                'sku_base' => $base?->sku_base ?? 'N/A',
+                'brand' => $base?->brand?->name ?? 'N/A',
+                'category' => $base?->category?->name ?? 'N/A',
+                'unit' => $base?->uom?->abbreviation ?? 'N/A',
+                'price' => $item->price,
+                'stock' => $item->stock,
+                'branch_image' => $item->image_path,
+                'catalog_image' => $base?->images->first()?->path,
+                'image' => $item->image_path ?? $base?->images->first()?->path,
+                'updated_at' => $item->updated_at->format('d/m/Y'),
+                'created_at' => $item->created_at->format('d/m/Y'),
+                'is_orphan' => $base === null, // Indicador de producto huérfano
+            ];
+        });
 
         return Inertia::render('sucursales/productos/Index', [
             'items' => $productos,
@@ -197,7 +202,7 @@ class BranchProductController extends Controller
                 'tax_code' => $request->input('tax_code'),
                 'specs_json' => $request->input('specs_json', []),
                 'is_active' => true,
-                'approval_status' => 'pending',
+                'approval_status' => \App\Models\ProductBase::STATUS_LOCAL,
                 'origin_negocio_id' => $negocioId,
                 'created_by' => $user->id,
             ]);
@@ -301,7 +306,10 @@ class BranchProductController extends Controller
                 }
             ])
             ->where('is_active', true)
-            ->where('approval_status', 'approved');
+            ->where('approval_status', \App\Models\ProductBase::STATUS_APPROVED)
+            // Solo productos corporativos (sin negocio de origen)
+            // Los productos rápidos locales NO deben aparecer en el catálogo
+            ->whereNull('origin_negocio_id');
 
         // Filtrar por búsqueda
         if ($request->filled('search')) {
@@ -391,7 +399,7 @@ class BranchProductController extends Controller
         // Verificar que el producto esté activo y aprobado
         $productBase = \App\Models\ProductBase::findOrFail($validated['product_base_id']);
         
-        if (!$productBase->is_active || $productBase->approval_status !== 'approved') {
+        if (!$productBase->is_active || $productBase->approval_status !== \App\Models\ProductBase::STATUS_APPROVED) {
             return back()->withErrors(['error' => 'Este producto no está disponible en el catálogo']);
         }
 

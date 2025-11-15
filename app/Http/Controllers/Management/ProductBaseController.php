@@ -14,9 +14,15 @@ class ProductBaseController
     public function index(Request $req)
     {
         $items = ProductBase::with(['brand', 'category', 'uom'])
+            // Solo mostrar productos corporativos (aprobados y sin negocio de origen)
+            // Los productos rápidos creados desde sucursales NO deben aparecer aquí
+            ->where('approval_status', ProductBase::STATUS_APPROVED)
+            ->whereNull('origin_negocio_id')
             ->when($req->search, function ($q) use ($req) {
-                $q->where('name', 'like', "%{$req->search}%")
-                  ->orWhere('sku_base', 'like', "%{$req->search}%");
+                $q->where(function ($query) use ($req) {
+                    $query->where('name', 'like', "%{$req->search}%")
+                          ->orWhere('sku_base', 'like', "%{$req->search}%");
+                });
             })
             ->orderByDesc('id')
             ->paginate(20)
@@ -111,6 +117,22 @@ class ProductBaseController
             return back()->withErrors(['password' => 'La contraseña es incorrecta']);
         }
 
+        // Verificar si el producto está siendo usado por sucursales
+        $inUse = ProductBaseBranch::where('product_base_id', $product_base->id)->exists();
+        
+        if ($inUse) {
+            // No eliminar, solo marcar como inactivo y archivado
+            $product_base->update([
+                'is_active' => false,
+                'approval_status' => ProductBase::STATUS_ARCHIVED,
+            ]);
+            
+            return redirect()
+                ->route('management.product-bases.index')
+                ->with('warning', 'Este producto está siendo usado por sucursales. Se marcó como inactivo/archivado en lugar de eliminarlo.');
+        }
+
+        // Si no está en uso, permitir eliminación normal
         $product_base->delete();
         
         return redirect()

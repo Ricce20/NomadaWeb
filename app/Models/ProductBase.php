@@ -10,6 +10,13 @@ class ProductBase extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // Estados de aprobación
+    public const STATUS_APPROVED = 'approved';  // Producto corporativo aprobado (catálogo global)
+    public const STATUS_PENDING = 'pending';    // Producto pendiente de aprobación
+    public const STATUS_REJECTED = 'rejected';  // Producto rechazado
+    public const STATUS_LOCAL = 'local';        // Producto local de sucursal (no aparece en catálogo global)
+    public const STATUS_ARCHIVED = 'archived';  // Producto archivado (estaba en uso, no se pudo eliminar)
+
     protected $fillable = [
         'sku_base',
         'name',
