@@ -26,3 +26,12 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Kiro IDE
+/.kiro/
+CHANGELOG.md
+
+# Documentación local y notas
+*.md
+!README.md
+docs/

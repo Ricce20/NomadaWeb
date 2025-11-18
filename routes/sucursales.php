@@ -1,9 +1,10 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ownership\SucursalController;
-use App\Http\Controllers\ownership\EmpleadoController;
-use App\Http\Controllers\ownership\UserController;
-use App\Http\Controllers\ownership\AlmacenController;
+use App\Http\Controllers\Ownership\SucursalController;
+use App\Http\Controllers\Ownership\EmpleadoController;
+use App\Http\Controllers\Ownership\UserController;
+use App\Http\Controllers\Ownership\AlmacenController;
+use App\Http\Controllers\Ownership\BranchProductController;
 use App\Http\Controllers\ownership\VehiculoController;
 use App\Http\Controllers\ownership\NegocioClienteController;
 
@@ -44,6 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/registrar/almacen',[AlmacenController::class,'store'])->name('almacen.store');
         Route::put('/{id}/almacen/update',[AlmacenController::class,'update'])->name('almacen.update');
         Route::delete('/{id}/almacen/delete',[AlmacenController::class,'delete'])->name('almacen.delete');
+        
         //vehiculos
         Route::get('{sucurslId}/vehiculos/index',[VehiculoController::class,'index'])->name('vehiculo.index');
         Route::post('/registrar/hehiculo',[VehiculoController::class,'store'])->name('vehiculo.store');
@@ -55,7 +57,27 @@ Route::middleware('auth')->group(function () {
         Route::post('/clientes/store',[NegocioClienteController::class,'store'])->name('cliente.store');
         Route::put('/clientes/{id}/update',[NegocioClienteController::class,'update'])->name('cliente.update');
         Route::delete('/clientes/{id}/delete',[NegocioClienteController::class,'delete'])->name('cliente.delete');
+        
+        // Alias de compatibilidad: /sucursal/{sucursal}/productos → /sucursales/{sucursal}/productos
+        Route::get('/{sucursal}/productos', function (\App\Models\Sucursal $sucursal) {
+            return redirect()->route('sucursales.productos.index', $sucursal);
+        })->name('productos.redirect');
     });
 
+    // Productos por sucursal (Route Model Binding)
+    Route::middleware(['auth'])
+        ->prefix('sucursales/{sucursal}')
+        ->name('sucursales.')
+        ->group(function () {
+            Route::get('productos', [BranchProductController::class, 'index'])->name('productos.index');
+            Route::get('productos/catalogo', [BranchProductController::class, 'catalog'])->name('productos.catalogo');
+            Route::post('productos', [BranchProductController::class, 'store'])->name('productos.store');
+            Route::post('productos/quick-add', [BranchProductController::class, 'quickAdd'])->name('productos.quick-add');
+            Route::post('productos/from-catalog', [BranchProductController::class, 'fromCatalog'])->name('productos.from-catalog');
+            Route::put('productos/{pivot}', [BranchProductController::class, 'update'])->name('productos.update');
+            Route::post('productos/{pivot}/image', [BranchProductController::class, 'updateImage'])->name('productos.update-image');
+            Route::delete('productos/{pivot}/image', [BranchProductController::class, 'destroyImage'])->name('productos.destroy-image');
+            Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
+        });
 
 });

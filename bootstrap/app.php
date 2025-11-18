@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -22,10 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
-        // Excluir rutas API de la verificación CSRF
-        $middleware->validateCsrfTokens(except: [
-            'api/*',
+
+        $middleware->alias([
+            'role' => CheckRole::class,
+            'manages.sucursal' => \App\Http\Middleware\EnsureUserManagesSucursal::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'api/*',]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

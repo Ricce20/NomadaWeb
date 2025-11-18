@@ -45,8 +45,8 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
     }), {} as Horarios);
 
     // Limpiar el nombre si es edición (remover el prefijo del negocio)
-    const nombreLimpio = isEdit && sucursal?.nombre 
-        ? sucursal.nombre.split(' - ').slice(1).join(' - ') 
+    const nombreLimpio = isEdit && sucursal?.nombre
+        ? sucursal.nombre.split(' - ').slice(1).join(' - ')
         : '';
 
     const { data, setData, post, put, processing, errors , reset} = useForm({
@@ -59,7 +59,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
     });
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        
+
         if (isEdit && sucursal) {
             put(update(sucursal.id).url, {
                 preserveScroll: true,
@@ -97,8 +97,8 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                     <HeadingSmall
                         title={isEdit ? "Editar Sucursal" : "Registrar Nueva Sucursal"}
                         description={
-                            isEdit 
-                                ? "Actualiza la información de la sucursal" 
+                            isEdit
+                                ? "Actualiza la información de la sucursal"
                                 : "Completa el formulario para agregar una nueva sucursal a tu negocio"
                         }
                     />
@@ -116,7 +116,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                     {/* Sección: Datos Generales */}
                     <div className="border-l-4 border-foreground rounded-lg p-6 bg-card shadow-xl dark:shadow-gray-500 dark:shadow-lg">
                         <h2 className="text-lg font-semibold text-foreground mb-6">Datos Generales</h2>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Nombre Input */}
                             <div className="space-y-2">
@@ -204,7 +204,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                     {/* Sección: Operación y Horarios */}
                     <div className="border-l-4 border-foreground rounded-lg p-6 shadow-lg">
                         <h2 className="text-lg font-semibold text-foreground mb-6">Operación y Horarios</h2>
-                        
+
                         {/* Estado de Operación */}
                         <div className="flex items-center justify-between mb-6 pb-6 border-b border-amber-200">
                             <div className="flex items-center gap-3">
@@ -240,7 +240,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                                     <div className="w-32 font-medium text-foreground">
                                         {dia.nombre}
                                     </div>
-                                    
+
                                     <label className="flex items-center gap-2">
                                         <input
                                             type="checkbox"
@@ -286,8 +286,8 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                             disabled={processing}
                             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
                         >
-                            {processing 
-                                ? (isEdit ? 'Actualizando...' : 'Guardando...') 
+                            {processing
+                                ? (isEdit ? 'Actualizando...' : 'Guardando...')
                                 : (isEdit ? 'Actualizar Sucursal' : 'Crear Sucursal')
                             }
                         </Button>
