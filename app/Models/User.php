@@ -8,11 +8,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // ← AGREGAR ESTA LÍNEA
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable,SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, SoftDeletes;
 
     // Tipos de usuario
     const TYPE_SUPER_ADMIN = 'super_admin';
@@ -20,6 +22,8 @@ class User extends Authenticatable
     const TYPE_MANAGER = 'manager';
     const TYPE_WAREHOUSEMAN = 'warehouse_man';
     const TYPE_DRIVER = 'driver';
+    const TYPE_CLIENT = 'client'; // ← AGREGAR ESTA CONSTANTE
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -73,7 +77,7 @@ class User extends Authenticatable
         return $this->type === $type;
     }
 
-     public function sucursales(): BelongsToMany
+    public function sucursales(): BelongsToMany
     {
         return $this->belongsToMany(
             Sucursal::class,
@@ -83,7 +87,7 @@ class User extends Authenticatable
         )->withTimestamps();
     }
 
-     public function getBusinessId(): ?int
+    public function getBusinessId(): ?int
     {
         if ($this->isOwner()) {
             return $this->negocio()->pluck('id')->first();
@@ -119,4 +123,5 @@ class User extends Authenticatable
     public function isAdmin(): bool { return $this->type === self::TYPE_MANAGER; }
     public function isAlmacenista(): bool { return $this->type === self::TYPE_WAREHOUSEMAN; }
     public function isConductor(): bool { return $this->type === self::TYPE_DRIVER; }
+    public function isClient(): bool { return $this->type === self::TYPE_CLIENT; } // ← AGREGAR ESTE HELPER
 }
