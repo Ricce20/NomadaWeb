@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => CheckRole::class,
             'manages.sucursal' => \App\Http\Middleware\EnsureUserManagesSucursal::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'api/*',]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

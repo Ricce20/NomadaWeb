@@ -22,6 +22,8 @@ class User extends Authenticatable
     const TYPE_MANAGER = 'manager';
     const TYPE_WAREHOUSEMAN = 'warehouse_man';
     const TYPE_DRIVER = 'driver';
+    const TYPE_CLIENT = 'client'; // ← AGREGAR ESTA CONSTANTE
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -75,7 +77,7 @@ class User extends Authenticatable
         return $this->type === $type;
     }
 
-     public function sucursales(): BelongsToMany
+    public function sucursales(): BelongsToMany
     {
         return $this->belongsToMany(
             Sucursal::class,
@@ -85,7 +87,7 @@ class User extends Authenticatable
         )->withTimestamps();
     }
 
-     public function getBusinessId(): ?int
+    public function getBusinessId(): ?int
     {
         if ($this->isOwner()) {
             return $this->negocio()->pluck('id')->first();
