@@ -37,6 +37,11 @@ class ApiAuthController extends Controller
         }
 
         $user = $query->first();
+        if(!$user){
+            return response()->json([
+                'error' => 'Credenciales invalidas'
+            ], 401);
+        }
 
         //NO HACEPTA OTRO TIPO DE USUARIO QUE NO SEAN ESTOS DOS DE ABAJO!!
         if(!in_array($user->type, ['driver', 'client'])){
