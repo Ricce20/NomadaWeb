@@ -11,7 +11,7 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     })->middleware('auth:sanctum');
 
-    Route::post('/api/logout',[ApiAuthController::class,'logout'])->name('api.auth.logout')->middleware('auth:sanctum');
+    Route::post('/api/logout',[ApiAuthController::class,'logout'])->name('api.auth.logout');
 
 });
     Route::post('/api/register',[ApiAuthController::class,'registerClient'])->name('api.auth.register-client');
