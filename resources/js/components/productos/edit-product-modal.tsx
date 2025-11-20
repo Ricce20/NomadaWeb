@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import productos from "@/routes/sucursales/productos";
 import { router } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import { Upload, Trash2, Image as ImageIcon } from "lucide-react";
+import { saleTypeOptions, type SaleType } from "@/lib/sale-types";
 
 interface ProductoItem {
   id: number;
@@ -35,6 +37,7 @@ interface ProductoItem {
   unit: string;
   price: string;
   stock: number;
+  sale_type: string;
   image?: string | null;
   branch_image?: string | null;
   catalog_image?: string | null;
@@ -56,6 +59,7 @@ export default function EditProductModal({
   const { toast } = useToast();
   const [price, setPrice] = useState<string>("");
   const [stock, setStock] = useState<string>("");
+  const [saleType, setSaleType] = useState<SaleType>("unit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -68,6 +72,7 @@ export default function EditProductModal({
     if (producto) {
       setPrice(producto.price);
       setStock(producto.stock.toString());
+      setSaleType((producto.sale_type || "unit") as SaleType);
       setImagePreview(null);
       setImageFile(null);
     }
@@ -225,6 +230,7 @@ export default function EditProductModal({
       {
         price: priceNum,
         stock: stockNum,
+        sale_type: saleType,
       },
       {
         preserveScroll: true,
@@ -464,6 +470,25 @@ export default function EditProductModal({
                   {producto.unit}
                 </span>
               </div>
+            </div>
+
+            {/* Tipo de venta */}
+            <div className="space-y-2">
+              <Label htmlFor="sale_type">
+                Tipo de venta <span className="text-destructive">*</span>
+              </Label>
+              <Select value={saleType} onValueChange={(v) => setSaleType(v as SaleType)}>
+                <SelectTrigger id="sale_type">
+                  <SelectValue placeholder="Selecciona tipo de venta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {saleTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -78,6 +78,7 @@ class BranchProductController extends Controller
                 'unit' => $base?->uom?->abbreviation ?? 'N/A',
                 'price' => $item->price,
                 'stock' => $item->stock,
+                'sale_type' => $item->sale_type ?? 'unit',
                 'branch_image' => $item->image_path,
                 'catalog_image' => $base?->images->first()?->path,
                 'image' => $item->image_path ?? $base?->images->first()?->path,
@@ -125,7 +126,7 @@ class BranchProductController extends Controller
             [
                 'price' => $validated['price'],
                 'stock' => $validated['stock'] ?? 0,
-                'sale_type' => 'unit', // Default: venta por unidad
+                'sale_type' => $validated['sale_type'] ?? 'unit',
             ]
         );
 
@@ -146,7 +147,7 @@ class BranchProductController extends Controller
         // Verificar que el pivot pertenece a la sucursal
         abort_unless($pivot->branch_id === $sucursal->id, 403);
 
-        $data = $request->only(['price', 'stock']);
+        $data = $request->only(['price', 'stock', 'sale_type']);
         // Evita tocar campos no enviados:
         $data = array_filter($data, fn($v) => !is_null($v));
 
@@ -222,7 +223,7 @@ class BranchProductController extends Controller
                 [
                     'price' => (float) $request->input('price'),
                     'stock' => (int) $request->input('stock'),
-                    'sale_type' => 'unit', // Default: venta por unidad
+                    'sale_type' => $request->input('sale_type', 'unit'),
                 ]
             );
         });
@@ -412,7 +413,7 @@ class BranchProductController extends Controller
             [
                 'price' => $validated['price'],
                 'stock' => $validated['stock'],
-                'sale_type' => 'unit', // Default: venta por unidad
+                'sale_type' => $validated['sale_type'] ?? 'unit',
             ]
         );
 

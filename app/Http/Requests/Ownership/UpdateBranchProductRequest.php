@@ -39,6 +39,7 @@ class UpdateBranchProductRequest extends FormRequest
         return [
             'price' => ['sometimes', 'numeric', 'min:0'],
             'stock' => ['sometimes', 'integer', 'min:0'],
+            'sale_type' => ['sometimes', 'string', 'in:' . implode(',', \App\Models\ProductBaseBranch::SALE_TYPES)],
         ];
     }
 
@@ -55,6 +56,7 @@ class UpdateBranchProductRequest extends FormRequest
             'price.min' => 'El precio no puede ser negativo.',
             'stock.integer' => 'El stock debe ser un número entero.',
             'stock.min' => 'El stock no puede ser negativo.',
+            'sale_type.in' => 'El tipo de venta seleccionado no es válido.',
         ];
     }
 }

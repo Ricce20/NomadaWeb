@@ -17,6 +17,7 @@ import debounce from "lodash.debounce";
 import { Boxes, ExternalLink, Filter, Plus, Pencil, X, Image } from "lucide-react";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { getSaleTypeLabel } from "@/lib/sale-types";
 
 interface ProductoItem {
   id: number;
@@ -28,6 +29,7 @@ interface ProductoItem {
   unit: string;
   price: string;
   stock: number;
+  sale_type: string;
   image?: string | null;
   branch_image?: string | null;
   catalog_image?: string | null;
@@ -337,6 +339,7 @@ export default function ProductosIndex({
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
                     <TableHead>UoM</TableHead>
+                    <TableHead>Tipo de venta</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
                     {can.manage && <TableHead className="text-right">Acciones</TableHead>}
                   </TableRow>
@@ -375,6 +378,11 @@ export default function ProductosIndex({
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">{item.unit || '—'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {getSaleTypeLabel(item.sale_type)}
+                        </span>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={item.stock > 0 ? "default" : "secondary"}>

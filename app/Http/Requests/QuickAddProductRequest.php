@@ -47,6 +47,7 @@ class QuickAddProductRequest extends FormRequest
             'specs_json' => ['nullable', 'array'],
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
+            'sale_type' => ['required', 'string', 'in:' . implode(',', \App\Models\ProductBaseBranch::SALE_TYPES)],
         ];
     }
 
@@ -64,6 +65,8 @@ class QuickAddProductRequest extends FormRequest
             'price.min' => 'El precio debe ser mayor o igual a 0.',
             'stock.required' => 'El stock es obligatorio.',
             'stock.min' => 'El stock debe ser mayor o igual a 0.',
+            'sale_type.required' => 'El tipo de venta es obligatorio.',
+            'sale_type.in' => 'El tipo de venta seleccionado no es válido.',
         ];
     }
 }

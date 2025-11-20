@@ -78,6 +78,10 @@ Route::middleware('auth')->group(function () {
             Route::post('productos/{pivot}/image', [BranchProductController::class, 'updateImage'])->name('productos.update-image');
             Route::delete('productos/{pivot}/image', [BranchProductController::class, 'destroyImage'])->name('productos.destroy-image');
             Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
+            
+            // Dashboard de inventario por almacén (solo lectura)
+            Route::get('inventario', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'index'])->name('inventario.index');
+            Route::get('inventario/{warehouse}', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'show'])->name('inventario.show');
         });
 
 });

@@ -10,7 +10,7 @@ import vehiculo from '@/routes/sucursal/vehiculo';
 import { view } from '@/routes/sucursales';
 import { NavItem, SucursalItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Boxes, Caravan, LucideFileSpreadsheet, UserCheck2Icon, UserCog2, Warehouse } from 'lucide-react';
+import { Boxes, Caravan, LucideFileSpreadsheet, UserCheck2Icon, UserCog2, Warehouse, PackageSearch } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 
 const getSidebarNavItems = (sucursalId: number): NavItem[] => [
@@ -18,6 +18,7 @@ const getSidebarNavItems = (sucursalId: number): NavItem[] => [
     { title: 'Empleados', href: empleado.index(sucursalId), icon: UserCheck2Icon },
     { title: 'Almacenes', href: almacen.index(sucursalId).url, icon: Warehouse },
     { title: 'Productos', href: productos.index(sucursalId).url, icon: Boxes },
+    { title: 'Inventario', href: `/sucursales/${sucursalId}/inventario`, icon: PackageSearch },
     { title: 'Vehículos', href: vehiculo.index(sucursalId).url, icon: Caravan},
     { title: 'Usuarios', href: usuario.index(sucursalId), icon: UserCog2 },
 ];

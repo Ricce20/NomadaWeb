@@ -18,6 +18,7 @@ import axios from "axios";
 import { Loader2, Plus, Search, Upload, X, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { saleTypeOptions, type SaleType } from "@/lib/sale-types";
 
 interface ProductBase {
   id: number;
@@ -73,6 +74,7 @@ export default function AddProductModal({
   const [selectedProduct, setSelectedProduct] = useState<ProductBase | null>(null);
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [saleType, setSaleType] = useState<SaleType>("unit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creating, setCreating] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -85,6 +87,7 @@ export default function AddProductModal({
     uom_id: units?.[0] ? String(units[0].id) : "none",
     price: "",
     stock: "",
+    sale_type: "unit" as SaleType,
   });
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export default function AddProductModal({
       setSelectedProduct(null);
       setPrice("");
       setStock("");
+      setSaleType("unit");
       setImageFile(null);
       setImagePreview(null);
       setForm({
@@ -106,6 +110,7 @@ export default function AddProductModal({
         uom_id: units?.[0] ? String(units[0].id) : "none",
         price: "",
         stock: "",
+        sale_type: "unit" as SaleType,
       });
     }
   }, [open, brands, categories, units]);
@@ -197,6 +202,7 @@ export default function AddProductModal({
         product_base_id: selectedProduct.id,
         price: parseFloat(price),
         stock: parseInt(stock),
+        sale_type: saleType,
       },
       {
         preserveScroll: true,
@@ -256,6 +262,7 @@ export default function AddProductModal({
     formData.append("uom_id", form.uom_id);
     formData.append("price", form.price);
     formData.append("stock", form.stock);
+    formData.append("sale_type", form.sale_type);
     
     if (imageFile) {
       formData.append("image", imageFile);
@@ -441,6 +448,23 @@ export default function AddProductModal({
                     required
                   />
                 </div>
+
+                {/* Tipo de venta */}
+                <div className="space-y-2">
+                  <Label htmlFor="sale_type">Tipo de venta *</Label>
+                  <Select value={saleType} onValueChange={(v) => setSaleType(v as SaleType)}>
+                    <SelectTrigger id="sale_type">
+                      <SelectValue placeholder="Selecciona tipo de venta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {saleTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             )}
           </div>
@@ -564,6 +588,23 @@ export default function AddProductModal({
                     placeholder="0"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label>Tipo de venta *</Label>
+                <Select
+                  value={form.sale_type}
+                  onValueChange={(v) => setForm((f) => ({ ...f, sale_type: v as SaleType }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Tipo de venta" /></SelectTrigger>
+                  <SelectContent>
+                    {saleTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Imagen del producto */}

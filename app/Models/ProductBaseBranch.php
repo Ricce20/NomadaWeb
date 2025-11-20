@@ -10,6 +10,21 @@ class ProductBaseBranch extends Model
     use HasFactory;
     protected $table = 'product_base_branch';
 
+    // Tipos de venta permitidos
+    public const SALE_TYPE_UNIT = 'unit';
+    public const SALE_TYPE_WEIGHT = 'weight';
+    public const SALE_TYPE_LENGTH = 'length';
+    public const SALE_TYPE_VOLUME = 'volume';
+    public const SALE_TYPE_AREA = 'area';
+
+    public const SALE_TYPES = [
+        self::SALE_TYPE_UNIT,
+        self::SALE_TYPE_WEIGHT,
+        self::SALE_TYPE_LENGTH,
+        self::SALE_TYPE_VOLUME,
+        self::SALE_TYPE_AREA,
+    ];
+
     protected $fillable = [
         'product_base_id',
         'branch_id',
@@ -24,6 +39,7 @@ class ProductBaseBranch extends Model
         'stock' => 'integer',
         'product_base_id' => 'integer',
         'branch_id' => 'integer',
+        'sale_type' => 'string',
     ];
 
     public function productBase()
