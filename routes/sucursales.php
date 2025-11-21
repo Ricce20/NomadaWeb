@@ -1,10 +1,10 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Ownership\SucursalController;
-use App\Http\Controllers\Ownership\EmpleadoController;
-use App\Http\Controllers\Ownership\UserController;
-use App\Http\Controllers\Ownership\AlmacenController;
-use App\Http\Controllers\Ownership\BranchProductController;
+use App\Http\Controllers\ownership\SucursalController;
+use App\Http\Controllers\ownership\EmpleadoController;
+use App\Http\Controllers\ownership\UserController;
+use App\Http\Controllers\ownership\AlmacenController;
+use App\Http\Controllers\ownership\BranchProductController;
 use App\Http\Controllers\ownership\VehiculoController;
 use App\Http\Controllers\ownership\NegocioClienteController;
 

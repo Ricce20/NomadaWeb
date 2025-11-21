@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\Ownership\SucursalController;
+use App\Http\Controllers\ownership\SucursalController;
 use App\Http\Controllers\Management\ProductBaseController;
 use App\Http\Controllers\Management\ProductBaseMediaController;
 use App\Http\Controllers\Management\ProductBasePricingController;
