@@ -43,7 +43,7 @@ class StoreBranchProductRequest extends FormRequest
                 }
             ],
             'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            // NOTA: 'stock' eliminado - ahora se maneja automáticamente desde inventario por almacén
             'sale_type' => ['required', 'string', 'in:' . implode(',', ProductBaseBranch::SALE_TYPES)],
         ];
     }

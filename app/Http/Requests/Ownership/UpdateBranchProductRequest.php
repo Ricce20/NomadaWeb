@@ -18,15 +18,8 @@ class UpdateBranchProductRequest extends FormRequest
             return false;
         }
 
-        // Si viene 'price' ⇒ requiere manage; si solo 'stock' ⇒ policy 'stock'
-        if ($this->has('price')) {
-            return $this->user()->can('manage', $sucursal);
-        }
-        if ($this->has('stock') && !$this->has('price')) {
-            return $this->user()->can('stock', $sucursal);
-        }
-        // Nada enviado: denegar (el controller devolverá 422)
-        return false;
+        // Solo se permite editar precio y tipo de venta (stock se maneja desde inventario)
+        return $this->user()->can('manage', $sucursal);
     }
 
     /**
@@ -38,7 +31,7 @@ class UpdateBranchProductRequest extends FormRequest
     {
         return [
             'price' => ['sometimes', 'numeric', 'min:0'],
-            'stock' => ['sometimes', 'integer', 'min:0'],
+            // NOTA: 'stock' eliminado - ahora se maneja automáticamente desde inventario por almacén
             'sale_type' => ['sometimes', 'string', 'in:' . implode(',', \App\Models\ProductBaseBranch::SALE_TYPES)],
         ];
     }

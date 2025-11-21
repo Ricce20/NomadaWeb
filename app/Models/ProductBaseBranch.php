@@ -57,4 +57,33 @@ class ProductBaseBranch extends Model
     {
         return $this->branch();
     }
+
+    /**
+     * Relación con productos en almacenes
+     */
+    public function warehouseProducts()
+    {
+        return $this->hasMany(WarehouseProduct::class, 'product_base_branch_id');
+    }
+
+    /**
+     * Recalcula el stock desde todos los almacenes y lo guarda.
+     * Este método sincroniza ProductBaseBranch.stock como espejo
+     * de la suma de warehouse_products.stock.
+     */
+    public function recalculateStockFromWarehouses(): void
+    {
+        $total = $this->warehouseProducts()->sum('stock');
+        $this->stock = $total;
+        $this->save();
+    }
+
+    /**
+     * Accessor para obtener el stock total desde almacenes sin guardarlo.
+     * Útil para comparaciones o verificaciones.
+     */
+    public function getTotalStockFromWarehousesAttribute(): int
+    {
+        return $this->warehouseProducts()->sum('stock');
+    }
 }

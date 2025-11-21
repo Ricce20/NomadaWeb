@@ -58,7 +58,6 @@ export default function EditProductModal({
 }: EditProductModalProps) {
   const { toast } = useToast();
   const [price, setPrice] = useState<string>("");
-  const [stock, setStock] = useState<string>("");
   const [saleType, setSaleType] = useState<SaleType>("unit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -71,7 +70,6 @@ export default function EditProductModal({
   useEffect(() => {
     if (producto) {
       setPrice(producto.price);
-      setStock(producto.stock.toString());
       setSaleType((producto.sale_type || "unit") as SaleType);
       setImagePreview(null);
       setImageFile(null);
@@ -203,7 +201,6 @@ export default function EditProductModal({
     if (!producto) return;
 
     const priceNum = parseFloat(price);
-    const stockNum = parseInt(stock);
 
     if (isNaN(priceNum) || priceNum < 0) {
       toast({
@@ -214,22 +211,12 @@ export default function EditProductModal({
       return;
     }
 
-    if (isNaN(stockNum) || stockNum < 0) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "El stock debe ser un número válido mayor o igual a 0",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     router.put(
       productos.update({ sucursal: sucursalId, pivot: producto.id }).url,
       {
         price: priceNum,
-        stock: stockNum,
         sale_type: saleType,
       },
       {
@@ -271,7 +258,7 @@ export default function EditProductModal({
           <DialogHeader>
             <DialogTitle>Editar producto</DialogTitle>
             <DialogDescription>
-              Modifica el precio, stock e imagen de este producto en la sucursal
+              Modifica el precio, tipo de venta e imagen de este producto en la sucursal
             </DialogDescription>
           </DialogHeader>
 
@@ -450,26 +437,21 @@ export default function EditProductModal({
               </div>
             </div>
 
-            {/* Stock */}
+            {/* Stock - Solo lectura, se maneja desde inventario */}
             <div className="space-y-2">
-              <Label htmlFor="stock">
-                Stock <span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="stock"
-                  type="number"
-                  min="0"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  placeholder="0"
-                  required
-                  disabled={isSubmitting}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  {producto.unit}
+              <Label>Stock actual</Label>
+              <div className="rounded-md border bg-muted px-3 py-3 flex items-center justify-between">
+                <span className="text-sm">
+                  <span className="font-mono font-medium">{producto.stock}</span>
+                  <span className="text-muted-foreground ml-2">{producto.unit}</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Solo lectura
                 </span>
               </div>
+              <p className="text-xs text-muted-foreground">
+                El stock se gestiona desde "Movimientos de inventario" y se calcula automáticamente desde los almacenes
+              </p>
             </div>
 
             {/* Tipo de venta */}

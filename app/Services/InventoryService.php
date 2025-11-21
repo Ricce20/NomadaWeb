@@ -78,6 +78,12 @@ class InventoryService
                 'performed_by' => $user?->id,
             ]);
 
+            // Sincronizamos el stock general de la sucursal (ProductBaseBranch.stock)
+            // como espejo de la suma de todos los almacenes (warehouse_products).
+            // Esto mantiene ProductBaseBranch.stock actualizado automáticamente
+            // sin necesidad de edición manual.
+            $productBaseBranch->recalculateStockFromWarehouses();
+
             return $movement;
         });
     }
