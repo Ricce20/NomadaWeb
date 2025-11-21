@@ -14,7 +14,38 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
+        $user = auth()->user();
+        $primaryBranch = null;
+        
+        // Determinar sucursal principal según el rol
+        if ($user && in_array($user->type, ['owner', 'warehouse_man', 'manager', 'driver'])) {
+            // Para owner: primera sucursal de su negocio
+            if ($user->isOwner()) {
+                $negocioId = $user->negocio()->pluck('id')->first();
+                if ($negocioId) {
+                    $sucursal = \App\Models\Sucursal::where('negocio_id', $negocioId)->first();
+                    if ($sucursal) {
+                        $primaryBranch = [
+                            'id' => $sucursal->id,
+                            'nombre' => $sucursal->nombre,
+                        ];
+                    }
+                }
+            } else {
+                // Para warehouse_man, manager, driver: primera sucursal asignada
+                $sucursal = $user->sucursales()->first();
+                if ($sucursal) {
+                    $primaryBranch = [
+                        'id' => $sucursal->id,
+                        'nombre' => $sucursal->nombre,
+                    ];
+                }
+            }
+        }
+        
+        return Inertia::render('dashboard', [
+            'primaryBranch' => $primaryBranch,
+        ]);
     })->name('dashboard');
 
     Route::get('management', function () {
