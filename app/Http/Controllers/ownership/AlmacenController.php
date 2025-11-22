@@ -92,7 +92,19 @@ class AlmacenController extends Controller
             return redirect()->back()->with(['error'=>'Accion no valida']);
         }
 
-        Almacen::create($validated);
+        // Crear en tabla almacenes (sistema antiguo)
+        $almacen = Almacen::create($validated);
+
+        // SINCRONIZACIÓN: Crear también en tabla warehouses (sistema nuevo de inventario)
+        // Esto permite que el almacén sea visible en el dashboard de inventario
+        \App\Models\Warehouse::create([
+            'branch_id' => $validated['sucursal_id'], // branch_id = sucursal_id
+            'name' => $validated['nombre'],
+            'description' => $validated['descripcion'] ?? 'Almacén creado desde panel de gestión',
+            'is_default' => false,
+            'status' => $validated['activo'] ? 'active' : 'inactive',
+        ]);
+
         return redirect()->back()->with(['success'=>'Almacen registrado correctamente']);
 
     }
@@ -121,6 +133,20 @@ class AlmacenController extends Controller
         }
         $almacen->update($validated);
 
+        // SINCRONIZACIÓN: Actualizar también en tabla warehouses
+        // Buscar warehouse con el mismo nombre y branch_id
+        $warehouse = \App\Models\Warehouse::where('branch_id', $almacen->sucursal_id)
+            ->where('name', $almacen->getOriginal('nombre')) // Nombre anterior
+            ->first();
+
+        if ($warehouse) {
+            $warehouse->update([
+                'name' => $validated['nombre'],
+                'description' => $validated['descripcion'] ?? $warehouse->description,
+                'status' => $validated['activo'] ? 'active' : 'inactive',
+            ]);
+        }
+
         return redirect()->back()->with(['success'=>'Almacen actualizado correctamente']);
 
     }
@@ -131,6 +157,16 @@ class AlmacenController extends Controller
         if(!$almacen){
             return redirect()->back()->with(['error'=>'Accion no valida']);
         }
+
+        // SINCRONIZACIÓN: Marcar como inactivo en warehouses (soft delete)
+        $warehouse = \App\Models\Warehouse::where('branch_id', $almacen->sucursal_id)
+            ->where('name', $almacen->nombre)
+            ->first();
+
+        if ($warehouse) {
+            $warehouse->update(['status' => 'inactive']);
+        }
+
         $almacen->delete();
 
         return redirect()->back()

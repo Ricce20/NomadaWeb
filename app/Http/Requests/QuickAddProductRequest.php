@@ -46,7 +46,8 @@ class QuickAddProductRequest extends FormRequest
             'tax_code' => ['nullable', 'string', 'max:64'],
             'specs_json' => ['nullable', 'array'],
             'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
+            // NOTA: 'stock' eliminado - ahora se maneja automáticamente desde inventario por almacén
+            'sale_type' => ['required', 'string', 'in:' . implode(',', \App\Models\ProductBaseBranch::SALE_TYPES)],
         ];
     }
 
@@ -62,8 +63,8 @@ class QuickAddProductRequest extends FormRequest
             'uom_id.required' => 'Debes seleccionar una unidad de medida.',
             'price.required' => 'El precio es obligatorio.',
             'price.min' => 'El precio debe ser mayor o igual a 0.',
-            'stock.required' => 'El stock es obligatorio.',
-            'stock.min' => 'El stock debe ser mayor o igual a 0.',
+            'sale_type.required' => 'El tipo de venta es obligatorio.',
+            'sale_type.in' => 'El tipo de venta seleccionado no es válido.',
         ];
     }
 }

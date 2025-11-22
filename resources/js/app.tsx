@@ -7,12 +7,13 @@ import { initializeTheme } from './hooks/use-appearance';
 import { Toaster } from '@/components/ui/toaster';
 import axios from 'axios';
 
-const token = document
-    .querySelector("meta[name='csrf-token']")
-    ?.getAttribute('content') || '';
-if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-}
+// CSRF token ya no se usa desde meta tag (Sanctum/Inertia lo manejan automáticamente)
+// const token = document
+//     .querySelector("meta[name='csrf-token']")
+//     ?.getAttribute('content') || '';
+// if (token) {
+//     axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+// }
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

@@ -18,6 +18,7 @@ import axios from "axios";
 import { Loader2, Plus, Search, Upload, X, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { saleTypeOptions, type SaleType } from "@/lib/sale-types";
 
 interface ProductBase {
   id: number;
@@ -72,7 +73,7 @@ export default function AddProductModal({
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductBase | null>(null);
   const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
+  const [saleType, setSaleType] = useState<SaleType>("unit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creating, setCreating] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -84,7 +85,7 @@ export default function AddProductModal({
     category_id: categories?.[0] ? String(categories[0].id) : "none",
     uom_id: units?.[0] ? String(units[0].id) : "none",
     price: "",
-    stock: "",
+    sale_type: "unit" as SaleType,
   });
 
   useEffect(() => {
@@ -95,7 +96,7 @@ export default function AddProductModal({
       setSearchResults([]);
       setSelectedProduct(null);
       setPrice("");
-      setStock("");
+      setSaleType("unit");
       setImageFile(null);
       setImagePreview(null);
       setForm({
@@ -105,7 +106,7 @@ export default function AddProductModal({
         category_id: categories?.[0] ? String(categories[0].id) : "none",
         uom_id: units?.[0] ? String(units[0].id) : "none",
         price: "",
-        stock: "",
+        sale_type: "unit" as SaleType,
       });
     }
   }, [open, brands, categories, units]);
@@ -184,11 +185,6 @@ export default function AddProductModal({
       return;
     }
 
-    if (!stock || parseInt(stock) < 0) {
-      toast.error("Ingresa un stock válido");
-      return;
-    }
-
     setIsSubmitting(true);
 
     router.post(
@@ -196,7 +192,7 @@ export default function AddProductModal({
       {
         product_base_id: selectedProduct.id,
         price: parseFloat(price),
-        stock: parseInt(stock),
+        sale_type: saleType,
       },
       {
         preserveScroll: true,
@@ -221,10 +217,7 @@ export default function AddProductModal({
     form.category_id !== "none" &&
     form.uom_id !== "none" &&
     form.price !== "" &&
-    Number(form.price) >= 0 &&
-    form.stock !== "" &&
-    Number.isInteger(Number(form.stock)) &&
-    Number(form.stock) >= 0;
+    Number(form.price) >= 0;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -255,7 +248,7 @@ export default function AddProductModal({
     formData.append("category_id", form.category_id);
     formData.append("uom_id", form.uom_id);
     formData.append("price", form.price);
-    formData.append("stock", form.stock);
+    formData.append("sale_type", form.sale_type);
     
     if (imageFile) {
       formData.append("image", imageFile);
@@ -428,18 +421,29 @@ export default function AddProductModal({
                   />
                 </div>
 
-                {/* Stock */}
+                {/* Stock - Solo lectura, se maneja desde inventario */}
                 <div className="space-y-2">
-                  <Label htmlFor="stock">Stock *</Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    required
-                  />
+                  <Label>Stock inicial</Label>
+                  <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                    El stock se inicializa en 0 y se gestiona desde "Movimientos de inventario"
+                  </div>
+                </div>
+
+                {/* Tipo de venta */}
+                <div className="space-y-2">
+                  <Label htmlFor="sale_type">Tipo de venta *</Label>
+                  <Select value={saleType} onValueChange={(v) => setSaleType(v as SaleType)}>
+                    <SelectTrigger id="sale_type">
+                      <SelectValue placeholder="Selecciona tipo de venta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {saleTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
@@ -541,7 +545,7 @@ export default function AddProductModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div>
                   <Label>Precio *</Label>
                   <Input
@@ -553,17 +557,31 @@ export default function AddProductModal({
                     placeholder="0.00"
                   />
                 </div>
+                
+                {/* Stock - Solo lectura, se maneja desde inventario */}
                 <div>
-                  <Label>Stock *</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.stock}
-                    onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
-                    placeholder="0"
-                  />
+                  <Label>Stock inicial</Label>
+                  <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                    El stock se inicializa en 0 y se gestiona desde "Movimientos de inventario"
+                  </div>
                 </div>
+              </div>
+
+              <div>
+                <Label>Tipo de venta *</Label>
+                <Select
+                  value={form.sale_type}
+                  onValueChange={(v) => setForm((f) => ({ ...f, sale_type: v as SaleType }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Tipo de venta" /></SelectTrigger>
+                  <SelectContent>
+                    {saleTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Imagen del producto */}

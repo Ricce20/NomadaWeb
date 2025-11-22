@@ -109,10 +109,27 @@ class User extends Authenticatable
             self::TYPE_OWNER => 'ownership',
             //comparten layout pero diferente seccion
             self::TYPE_MANAGER => 'orders.index',
-            self::TYPE_WAREHOUSEMAN => 'warehouse.index',
+            self::TYPE_WAREHOUSEMAN => $this->getWarehousemanDashboard(),
             //no tienen dashboard, van al login
             default => 'login',
         };
+    }
+
+    /**
+     * Obtener dashboard para warehouse_man
+     */
+    private function getWarehousemanDashboard(): string
+    {
+        // Obtener primera sucursal asignada
+        $sucursal = $this->sucursales()->first();
+        
+        if ($sucursal) {
+            // Redirigir al dashboard de inventario de su sucursal
+            return "/sucursales/{$sucursal->id}/inventario";
+        }
+        
+        // Si no tiene sucursal, ir a ownership
+        return 'ownership';
     }
 
     /**

@@ -78,6 +78,17 @@ Route::middleware('auth')->group(function () {
             Route::post('productos/{pivot}/image', [BranchProductController::class, 'updateImage'])->name('productos.update-image');
             Route::delete('productos/{pivot}/image', [BranchProductController::class, 'destroyImage'])->name('productos.destroy-image');
             Route::delete('productos/{pivot}', [BranchProductController::class, 'destroy'])->name('productos.destroy');
+            
+            // Dashboard de inventario por almacén (solo lectura) - Accesible para owner y warehouse_man
+            Route::middleware(['role:owner,warehouse_man'])->group(function () {
+                Route::get('inventario', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'index'])->name('inventario.index');
+                Route::get('inventario/{warehouse}', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'show'])->name('inventario.show');
+                
+                // Movimientos de inventario (entradas y ajustes)
+                Route::get('movimientos-inventario', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'index'])->name('movimientos-inventario.index');
+                Route::get('movimientos-inventario/create', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'create'])->name('movimientos-inventario.create');
+                Route::post('movimientos-inventario', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'store'])->name('movimientos-inventario.store');
+            });
         });
 
 });

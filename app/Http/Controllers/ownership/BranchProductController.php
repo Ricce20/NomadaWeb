@@ -78,6 +78,7 @@ class BranchProductController extends Controller
                 'unit' => $base?->uom?->abbreviation ?? 'N/A',
                 'price' => $item->price,
                 'stock' => $item->stock,
+                'sale_type' => $item->sale_type ?? 'unit',
                 'branch_image' => $item->image_path,
                 'catalog_image' => $base?->images->first()?->path,
                 'image' => $item->image_path ?? $base?->images->first()?->path,
@@ -117,6 +118,7 @@ class BranchProductController extends Controller
         $validated = $request->validated();
 
         // Usar firstOrCreate para manejar race conditions
+        // NOTA: stock se inicializa en 0 y se actualizará automáticamente desde inventario
         $pivot = ProductBaseBranch::firstOrCreate(
             [
                 'product_base_id' => $validated['product_base_id'],
@@ -124,8 +126,8 @@ class BranchProductController extends Controller
             ],
             [
                 'price' => $validated['price'],
-                'stock' => $validated['stock'] ?? 0,
-                'sale_type' => 'unit', // Default: venta por unidad
+                'stock' => 0, // Inicializado en 0, se actualizará desde movimientos de inventario
+                'sale_type' => $validated['sale_type'] ?? 'unit',
             ]
         );
 
@@ -146,7 +148,8 @@ class BranchProductController extends Controller
         // Verificar que el pivot pertenece a la sucursal
         abort_unless($pivot->branch_id === $sucursal->id, 403);
 
-        $data = $request->only(['price', 'stock']);
+        // NOTA: 'stock' ya no se edita manualmente, se sincroniza desde inventario
+        $data = $request->only(['price', 'sale_type']);
         // Evita tocar campos no enviados:
         $data = array_filter($data, fn($v) => !is_null($v));
 
@@ -217,12 +220,13 @@ class BranchProductController extends Controller
                 ]);
             }
 
+            // NOTA: stock se inicializa en 0 y se actualizará desde inventario
             ProductBaseBranch::firstOrCreate(
                 ['product_base_id' => $base->id, 'branch_id' => $sucursal->id],
                 [
                     'price' => (float) $request->input('price'),
-                    'stock' => (int) $request->input('stock'),
-                    'sale_type' => 'unit', // Default: venta por unidad
+                    'stock' => 0, // Inicializado en 0, se actualizará desde movimientos de inventario
+                    'sale_type' => $request->input('sale_type', 'unit'),
                 ]
             );
         });
@@ -393,7 +397,8 @@ class BranchProductController extends Controller
         $validated = $request->validate([
             'product_base_id' => ['required', 'exists:product_bases,id'],
             'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
+            // NOTA: 'stock' eliminado - ahora se maneja automáticamente desde inventario por almacén
+            'sale_type' => ['sometimes', 'string', 'in:' . implode(',', \App\Models\ProductBaseBranch::SALE_TYPES)],
         ]);
 
         // Verificar que el producto esté activo y aprobado
@@ -404,6 +409,7 @@ class BranchProductController extends Controller
         }
 
         // Crear o actualizar el registro
+        // NOTA: stock se inicializa en 0 y se actualizará desde inventario
         $pivot = ProductBaseBranch::firstOrCreate(
             [
                 'product_base_id' => $validated['product_base_id'],
@@ -411,8 +417,8 @@ class BranchProductController extends Controller
             ],
             [
                 'price' => $validated['price'],
-                'stock' => $validated['stock'],
-                'sale_type' => 'unit', // Default: venta por unidad
+                'stock' => 0, // Inicializado en 0, se actualizará desde movimientos de inventario
+                'sale_type' => $validated['sale_type'] ?? 'unit',
             ]
         );
 
