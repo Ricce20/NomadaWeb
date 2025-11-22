@@ -7,7 +7,8 @@ use App\Http\Controllers\ownership\AlmacenController;
 use App\Http\Controllers\ownership\BranchProductController;
 use App\Http\Controllers\ownership\VehiculoController;
 use App\Http\Controllers\ownership\NegocioClienteController;
-
+use App\Http\Controllers\Api\ApiNegocioController;
+use App\Http\Controllers\empleados\PedidosController;
 
 Route::middleware('auth')->group(function () {
     Route::prefix('sucursales')->name('sucursales.')->group(function () {
@@ -62,6 +63,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/{sucursal}/productos', function (\App\Models\Sucursal $sucursal) {
             return redirect()->route('sucursales.productos.index', $sucursal);
         })->name('productos.redirect');
+
+        Route::get('/clientes-negocio/index',[NegocioClienteController::class,'clientes'])->name('cliente.negocio.index');
+        Route::get('/pedidos/buscar-productos', [ApiNegocioController::class, 'searchProducts'])
+        ->name('orders.search-products');
+
+        //pedidos
+        Route::get('/cliente/{id}/generar-pedido',[PedidosController::class,'crearPedidoLocal'])->name('pedido.crear-local');
     });
 
     // Productos por sucursal (Route Model Binding)

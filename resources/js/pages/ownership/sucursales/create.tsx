@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import InputError from "@/components/input-error";
-import { FormEvent } from "react";
+import { FormEvent, useState, useEffect } from "react";
+import SelectorUbicacionSucursal from "@/components/selectorUbicacionSucursal";
 
 const diasSemana = [
     { id: 'lunes', nombre: 'Lunes' },
@@ -49,16 +50,61 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
         ? sucursal.nombre.split(' - ').slice(1).join(' - ')
         : '';
 
-    const { data, setData, post, put, processing, errors , reset} = useForm({
+    // Estados para las coordenadas
+    const [coordenadasSucursal, setCoordenadasSucursal] = useState<{
+        latitud: number | null;
+        longitud: number | null;
+        direccion: string;
+    }>({
+        latitud: sucursal?.latitud || null,
+        longitud: sucursal?.longitud || null,
+        direccion: sucursal?.direccion_completa || ''
+    });
+
+    const { data, setData, post, put, processing, errors, reset } = useForm({
         nombre: nombreLimpio || '',
         telefono: sucursal?.telefono || '',
         direccion_completa: sucursal?.direccion_completa || '',
         codigo_postal: sucursal?.codigo_postal || '',
+        latitud: sucursal?.latitud || null,
+        longitud: sucursal?.longitud || null,
         activo: sucursal?.activo ?? true,
         horarios: horariosIniciales
     });
+
+    // Actualizar datos del formulario cuando cambian las coordenadas
+    useEffect(() => {
+        setData('latitud', coordenadasSucursal.latitud);
+        setData('longitud', coordenadasSucursal.longitud);
+        
+        // Si hay una nueva dirección del mapa, actualizarla
+        if (coordenadasSucursal.direccion && coordenadasSucursal.direccion !== data.direccion_completa) {
+            setData('direccion_completa', coordenadasSucursal.direccion);
+        }
+    }, [coordenadasSucursal]);
+
+    // Actualizar coordenadas cuando cambia la dirección manualmente
+    useEffect(() => {
+        // Si hay una dirección pero no coordenadas, buscar automáticamente
+        if (data.direccion_completa && data.direccion_completa.trim() && 
+            !coordenadasSucursal.latitud && !coordenadasSucursal.longitud) {
+            
+            // Actualizar el estado para que el componente hijo haga la búsqueda
+            setCoordenadasSucursal(prev => ({
+                ...prev,
+                direccion: data.direccion_completa
+            }));
+        }
+    }, [data.direccion_completa]);
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
+
+        // Validar que se hayan proporcionado coordenadas
+        if (!data.latitud || !data.longitud) {
+            alert('Por favor, selecciona la ubicación de la sucursal en el mapa');
+            return;
+        }
 
         if (isEdit && sucursal) {
             put(update(sucursal.id).url, {
@@ -72,6 +118,11 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     reset();
+                    setCoordenadasSucursal({
+                        latitud: null,
+                        longitud: null,
+                        direccion: ''
+                    });
                 }
             });
         }
@@ -84,6 +135,18 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                 ...data.horarios[dia],
                 [field]: value
             }
+        });
+    };
+
+    // Manejar datos de ubicación del componente de mapa
+    const handleUbicacionSucursal = (data: {
+        coordenadas: [number, number];
+        direccion: string;
+    }) => {
+        setCoordenadasSucursal({
+            latitud: data.coordenadas[0],
+            longitud: data.coordenadas[1],
+            direccion: data.direccion
         });
     };
 
@@ -174,7 +237,7 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                                     onChange={(e) => setData('direccion_completa', e.target.value)}
                                     placeholder="Calle Falsa 123, Col. Centro, Guadalajara, Jalisco"
                                     className="w-full border"
-                                    required
+                                    readOnly
                                 />
                                 <InputError message={errors.direccion_completa} />
                             </div>
@@ -199,6 +262,82 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                                 <InputError message={errors.codigo_postal} />
                             </div>
                         </div>
+
+                        {/* Información de coordenadas */}
+                        {(data.latitud && data.longitud) && (
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-green-800">
+                                            ✅ Ubicación de sucursal confirmada
+                                        </p>
+                                        <p className="text-xs text-green-600 mt-1">
+                                            Lat: {data.latitud}, Lng: {data.longitud}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-green-600">
+                                            La ubicación se usará para calcular rutas de entrega
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* Sección: Ubicación en Mapa */}
+                    <div className="border-l-4 border-blue-500 rounded-lg p-6 bg-card shadow-lg">
+                        <h2 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-blue-500" />
+                            Ubicación en Mapa
+                        </h2>
+                        
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <p className="text-sm text-blue-700">
+                                    💡 <strong>Importante:</strong> Selecciona la ubicación exacta de tu sucursal en el mapa. 
+                                    Esto permitirá calcular rutas de entrega precisas para tus pedidos.
+                                </p>
+                            </div>
+
+                            {/* Componente de mapa con manejo de errores */}
+                            <div className="border border-gray-200 rounded-lg p-4">
+                                <SelectorUbicacionSucursal 
+                                    onUbicacionSeleccionada={handleUbicacionSucursal}
+                                    ubicacionInicial={
+                                        // Convertir a números y validar que existan ambas coordenadas
+                                        (data.latitud && data.longitud)
+                                            ? [Number(data.latitud), Number(data.longitud)] as [number, number]
+                                            : null
+                                    }
+                                    direccionInicial={data.direccion_completa || ''}
+                                />
+                            </div>
+
+                            {/* Advertencia si no hay ubicación seleccionada */}
+                            {!data.latitud && !data.longitud && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <p className="text-yellow-700 text-sm">
+                                        ⚠️ <strong>Ubicación requerida:</strong> Debes seleccionar la ubicación de la sucursal en el mapa para poder guardar.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Mostrar ubicación seleccionada si existe */}
+                            {data.latitud && data.longitud && (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <p className="text-green-700 text-sm flex items-center gap-2">
+                                        <span>✓</span>
+                                        <strong>Ubicación guardada:</strong> Lat: {Number(data.latitud).toFixed(6)}, Lon: {Number(data.longitud).toFixed(6)}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Errores de validación */}
+                        <InputError message={errors.latitud} />
+                        <InputError message={errors.longitud} />
                     </div>
 
                     {/* Sección: Operación y Horarios */}
@@ -283,8 +422,8 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                         </Link>
                         <Button
                             type="submit"
-                            disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                            disabled={processing || !data.latitud || !data.longitud}
+                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing
                                 ? (isEdit ? 'Actualizando...' : 'Guardando...')

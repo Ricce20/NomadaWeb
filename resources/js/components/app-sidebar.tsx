@@ -15,6 +15,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
+import cliente from '@/routes/sucursal/cliente';
 
 const mainNavItems: NavItem[] = [
     {
@@ -22,6 +23,11 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Clientes',
+        href: cliente.negocio.index().url, // Adjust the href as needed
+        icon: Folder,
+    }
 ];
 
 const footerNavItems: NavItem[] = [

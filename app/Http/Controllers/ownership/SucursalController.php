@@ -72,6 +72,8 @@ class SucursalController extends Controller
             'horarios' => 'required|array',
             'codigo_postal' => 'required|string|max:5',
             'activo' => 'required|boolean',
+            'latitud' => 'required|numeric',
+            'longitud' => 'required|numeric',
         ]);
 
         // Modificar el nombre para incluir el del negocio
@@ -95,6 +97,8 @@ class SucursalController extends Controller
         $sucursal->codigo_postal = $validated['codigo_postal'];
         $sucursal->activo = $validated['activo'];
         $sucursal->negocio_id = auth()->user()->negocio()->first()->id;
+        $sucursal->latitud = $validated['latitud'];
+        $sucursal->longitud = $validated['longitud'];
         $sucursal->save();
 
         return redirect()->back()
@@ -121,7 +125,9 @@ class SucursalController extends Controller
                 'telefono',
                 'horarios',
                 'codigo_postal',
-                'activo'
+                'activo',
+                'latitud',
+                'longitud',
             ]),
         ]);
     }
@@ -146,6 +152,8 @@ class SucursalController extends Controller
             'horarios' => 'required|array',
             'codigo_postal' => 'required|string|max:5',
             'activo' => 'required|boolean',
+            'latitud' => 'required|numeric',
+            'longitud' => 'required|numeric',
         ]);
 
         // Modificar el nombre para incluir el del negocio
@@ -167,6 +175,8 @@ class SucursalController extends Controller
         $sucursal->horarios = $validated['horarios'];
         $sucursal->codigo_postal = $validated['codigo_postal'];
         $sucursal->activo = $validated['activo'];
+        $sucursal->latitud = $validated['latitud'];
+        $sucursal->longitud = $validated['longitud'];
         $sucursal->save();
 
         return redirect()->back()

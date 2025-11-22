@@ -18,14 +18,12 @@ return new class extends Migration
             $table->string('codigo_cliente')->unique()->nullable();
             $table->string('telefono',12)->unique();
             $table->unsignedBigInteger('negocio_id');
-            $table->unsignedBigInteger('user_id')->nullable();
             $table->date('fecha_registro');
             $table->boolean('activo')->default(true);
             $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('negocio_id')->references('id')->on('negocios')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

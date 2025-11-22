@@ -458,4 +458,97 @@ class ApiNegocioController extends Controller
             ], 500);
         }
     }
+
+    public function searchProducts(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado'
+                ], 401);
+            }
+
+            // Validación
+            $validated = $request->validate([
+                'search' => 'required|string|max:255',
+                'sucursal_id' => 'required|integer|exists:sucursales,id'
+            ]);
+
+            $sucursalId = $validated['sucursal_id'];
+            $searchTerm = trim($validated['search']);
+
+            // Verificar que el usuario tenga acceso a esta sucursal
+            $userHasAccess = $user->sucursales()
+                ->where('sucursales.id', $sucursalId)
+                ->exists();
+
+            if (!$userHasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes acceso a esta sucursal'
+                ], 403);
+            }
+
+            // Buscar productos en la sucursal
+            $productos = ProductBaseBranch::query()
+                ->where('branch_id', $sucursalId)
+                ->whereHas('productBase', function($q) use ($searchTerm) {
+                    $q->where('is_active', true)
+                      ->where(function($subQ) use ($searchTerm) {
+                          $subQ->where('name', 'like', "%{$searchTerm}%")
+                               ->orWhere('sku_base', 'like', "%{$searchTerm}%");
+                      });
+                })
+                ->with([
+                    'productBase' => function($q) {
+                        $q->select('id', 'sku_base', 'name', 'brand_id', 'category_id', 'uom_id', 'tax_code', 'specs_json')
+                          ->with([
+                              'brand:id,name', 
+                              'category:id,name', 
+                              'uom:id,name,abbreviation'
+                          ]);
+                    }
+                ])
+                ->select('id', 'product_base_id', 'branch_id', 'price', 'sale_type', 'image_path')
+                ->limit(20) // Limitar resultados
+                ->get()
+                ->map(function($productBranch) {
+                    $productBase = $productBranch->productBase;
+                    
+                    return [
+                        'id' => $productBranch->id,
+                        'product_base_id' => $productBranch->product_base_id,
+                        'nombre' => $productBase->name,
+                        'descripcion' => $productBase->specs_json['descripcion'] ?? '',
+                        'sku' => $productBase->sku_base,
+                        'unidad_medida' => $productBase->uom->abbreviation ?? $productBase->uom->name ?? 'UND',
+                        'precio' => (float) $productBranch->price,
+                        'imagen_url' => $productBranch->image_path 
+                            ? asset('storage/' . $productBranch->image_path) 
+                            : null,
+                        'marca' => $productBase->brand->name ?? null,
+                        'categoria' => $productBase->category->name ?? null,
+                        'sale_type' => $productBranch->sale_type,
+                    ];
+                });
+
+            return response()->json($productos);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos de validación incorrectos',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar productos',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }

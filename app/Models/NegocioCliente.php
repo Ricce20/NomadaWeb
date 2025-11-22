@@ -27,5 +27,9 @@ class NegocioCliente extends Model
     public function negocio(){
         return $this->belongsTo(Negocio::class);
     }
+    public function direcciones_cliente()
+    {
+        return $this->hasMany(ClienteDireccion::class, 'negocio_cliente_id');
+    }
     
 }
