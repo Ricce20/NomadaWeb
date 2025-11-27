@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 
 class NegocioClienteController extends Controller
 {
-    private function getNegocioId():string|int{
+    private function getNegocioId():string|int | null{
         return auth()->user()->negocio()->pluck('id')->first();
     }
 
@@ -70,6 +70,57 @@ class NegocioClienteController extends Controller
 
     }
 
+    public function clientes(Request $request){
+         //obtenemos el negocio
+        $sucursalId = auth()->user()->sucursales()->pluck('sucursales.id')->first();
+
+        $sucursal = Sucursal::where('id', $sucursalId)->first();
+        $query = NegocioCliente::query()->where('negocio_id',$sucursal->negocio_id);
+        
+        // Filtro opcional para ver registros eliminados
+        if ($request->input('trashed') === 'only') {
+            $query->onlyTrashed();
+        } elseif ($request->input('trashed') === 'with') {
+            $query->withTrashed();
+        }
+        // Por defecto solo muestra registros activos (sin onlyTrashed ni withTrashed)
+
+        // Búsqueda opcional
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            // Agrupamos las condiciones OR para que no anulen las condiciones WHERE previas
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('apellidos', 'like', "%{$search}%")
+                  ->orWhere('telefono','like',"%{$search}%");
+            });
+        }
+
+         // Ordenamiento
+        $sortField = $request->input('sort', 'created_at');
+        $sortDirection = $request->input('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $items = $query->paginate(15)
+            ->withQueryString()
+            ->through(fn($item) => [
+                'id' => $item->id,
+                'nombre' => $item->nombre,
+                'apellidos' => $item->apellidos,
+                'telefono' => $item->telefono,
+                'fecha_registro' => $item->fecha_registro,
+                'activo' => $item->activo,
+                'created_at' => $item->created_at->format('d/m/Y'),
+                'updated_at' => $item->updated_at->format('d/m/Y'),
+                'deleted_at' => $item->deleted_at?->format('d/m/Y')
+            ]);
+
+        return Inertia::render('empleados/clientes', [
+                'items' => $items,
+                'filters' => $request->only(['search', 'trashed', 'sort', 'direction']),
+            ]);
+    }
+
 
     //store
     public function store(Request $request)
@@ -82,7 +133,11 @@ class NegocioClienteController extends Controller
             'activo' => 'required|boolean'            
         ]);
 
-        $negocioId = $this->getNegocioId();
+        $negocioId = $this->getNegocioId() ?? null;
+
+        $sucursal = auth()->user()->sucursales()->first();
+
+         // Generar un código de cliente único
         $code = "";
         do{
             $code = Str::random(10);
@@ -92,7 +147,7 @@ class NegocioClienteController extends Controller
         $add = [
             'fecha_registro' => now(),
             'activo' => true,
-            'negocio_id' => $negocioId,
+            'negocio_id' => $negocioId ?? $sucursal->negocio_id,
             'codigo_cliente' => $code
         ];
 

@@ -11,16 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('warehouse_products', function (Blueprint $table) {
+        Schema::create('almacen_productos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
+            $table->foreignId('almacen_id')->constrained('almacenes')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('product_base_branch_id')->constrained('product_base_branch')->onDelete('cascade');
             $table->integer('stock')->default(0);
-            $table->integer('min_stock')->nullable();
             $table->timestamps();
             
-            $table->unique(['warehouse_id', 'product_base_branch_id']);
-            $table->index('warehouse_id');
+            $table->unique(['almacen_id', 'product_base_branch_id']);
+            $table->index('almacen_id');
             $table->index('product_base_branch_id');
         });
     }
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('warehouse_products');
+        Schema::dropIfExists('almacen_productos');
     }
 };

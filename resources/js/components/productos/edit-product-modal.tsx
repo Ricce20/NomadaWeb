@@ -36,7 +36,6 @@ interface ProductoItem {
   category: string;
   unit: string;
   price: string;
-  stock: number;
   sale_type: string;
   image?: string | null;
   branch_image?: string | null;
@@ -435,23 +434,6 @@ export default function EditProductModal({
                   disabled={isSubmitting}
                 />
               </div>
-            </div>
-
-            {/* Stock - Solo lectura, se maneja desde inventario */}
-            <div className="space-y-2">
-              <Label>Stock actual</Label>
-              <div className="rounded-md border bg-muted px-3 py-3 flex items-center justify-between">
-                <span className="text-sm">
-                  <span className="font-mono font-medium">{producto.stock}</span>
-                  <span className="text-muted-foreground ml-2">{producto.unit}</span>
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Solo lectura
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                El stock se gestiona desde "Movimientos de inventario" y se calcula automáticamente desde los almacenes
-              </p>
             </div>
 
             {/* Tipo de venta */}

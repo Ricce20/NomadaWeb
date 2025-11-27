@@ -1,3 +1,4 @@
+
 import { BreadcrumbItem, Cliente, PaginatedResponse } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { debounce } from "lodash";
@@ -5,7 +6,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import cliente from "@/routes/sucursal/cliente";
 import AppLayoutOwnership from "@/layouts/app-layout-ownership";
 import HeadingSmall from "@/components/heading-small";
-import { BadgeCheck, Calendar, Caravan, Clock, Pencil, Phone, Plus, Trash, User } from "lucide-react";
+import { BadgeCheck, Calendar, Caravan, Clock, LucidePersonStanding, Pencil, Phone, Plus, Trash, User } from "lucide-react";
 import { ClienteDialog } from "@/components/cliente-dialog";
 import { Button } from "@headlessui/react";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,8 @@ import { VehiculoDialog } from "@/components/vehiculo-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import AppLayout from "@/layouts/app-layout";
+import pedido from "@/routes/sucursal/pedido";
 
 
 type TrashedFilter = "" | "with" | "only";
@@ -33,8 +36,8 @@ interface IndexProps {
 }
 const breadcrumbs:BreadcrumbItem[] = [
     {
-        title:"Clientes",
-        href: cliente.index().url
+        title:"Nuestro Clientes",
+        href: cliente.negocio.index().url,
     }
 ];
 
@@ -51,7 +54,7 @@ export default function Clientes({items,filters}:IndexProps){
         ...emp,
         fullName: `${emp.nombre} ${emp.apellidos ?? ""}`.trim(),
         editUrl: cliente.update(emp.id).url,
-        deleteUrl: cliente.delete(emp.id).url,
+        generarPedidoUrl: pedido.crearLocal(emp.id).url,
         createdLabel,
         updatedLabel,
       };
@@ -69,7 +72,7 @@ export default function Clientes({items,filters}:IndexProps){
 
   const debouncedSearch = useMemo(
     () => debounce((filters: Filters) => {
-      router.get(cliente.index().url, filtersToPayload(filters), {
+      router.get(cliente.negocio.index().url, filtersToPayload(filters), {
         preserveState: true,
         replace: true,
       });
@@ -87,7 +90,7 @@ export default function Clientes({items,filters}:IndexProps){
     if (key === "search") {
       debouncedSearch(newFilters);
     } else {
-      router.get(cliente.index().url, filtersToPayload(newFilters), {
+      router.get(cliente.negocio.index().url, filtersToPayload(newFilters), {
         preserveState: true,
         replace: true,
       });
@@ -114,7 +117,7 @@ export default function Clientes({items,filters}:IndexProps){
       trashed: "" as TrashedFilter,
     };
     setFilters(resetFilters);
-    router.get(cliente.index().url, filtersToPayload(resetFilters), {
+    router.get(cliente.negocio.index().url, filtersToPayload(resetFilters), {
       preserveState: true,
       replace: true,
     });
@@ -128,7 +131,7 @@ export default function Clientes({items,filters}:IndexProps){
 
 
   return (
-      <AppLayoutOwnership breadcrumbs={breadcrumbs}>
+      <AppLayout breadcrumbs={breadcrumbs}>
           <Head title="Clientes"/>
 
           <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
@@ -247,7 +250,7 @@ export default function Clientes({items,filters}:IndexProps){
           <Empty className="border border-dashed">
             <EmptyHeader>
               <EmptyMedia>
-                <Caravan className="w-16 h-16 text-muted-foreground" />
+                <LucidePersonStanding className="w-16 h-16 text-muted-foreground" />
               </EmptyMedia>
               <EmptyTitle>No hay clientes registrados</EmptyTitle>
               <EmptyDescription>
@@ -355,36 +358,12 @@ export default function Clientes({items,filters}:IndexProps){
                               <Tooltip>
                                   <TooltipTrigger asChild>
                                       
-                                      <div>
-                                          <AlertDialog>
-                                              <AlertDialogTrigger asChild>
-                                                <button className="p-2 rounded-md hover:bg-red-50 transition-colors">
-                                                  <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
-                                                </button>
-                                              </AlertDialogTrigger>
-                                              <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                  <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
-                                                  <AlertDialogDescription>
-                                                    Esta acción eliminará permanentemente al empleado{" "}
-                                                    <strong>{clientItem.fullName}</strong>. Esta acción no se puede deshacer.
-                                                  </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                  <AlertDialogAction
-                                                    onClick={() => handleDelete(clientItem.id)}
-                                                    className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
-                                                  >
-                                                    Eliminar
-                                                  </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                              </AlertDialogContent>
-                                            </AlertDialog>
-                                          </div>
+                                          <Link href={clientItem.generarPedidoUrl} className="p-2 rounded-md transition-colors hover:bg-gray-400">
+                                              <Calendar className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                                          </Link>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                          <p>Eliminar cliente</p>
+                                          <p>Generar Pedido Nuevo</p>
                                         </TooltipContent>
                                       </Tooltip>
                                     </>
@@ -439,8 +418,8 @@ export default function Clientes({items,filters}:IndexProps){
                         )}
                     </>
                   )}
-          </div>
-      </AppLayoutOwnership>
+            </div>
+      </AppLayout>
   );
 
 }

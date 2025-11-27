@@ -12,10 +12,10 @@ import { ArrowLeft, Package, AlertTriangle } from "lucide-react";
 
 interface WarehouseInfo {
   id: number;
-  name: string;
-  description: string | null;
-  is_default: boolean;
-  status: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  ubicacion: string;
 }
 
 interface InventoryItem {
@@ -24,25 +24,24 @@ interface InventoryItem {
   sku: string;
   sale_type: string;
   stock: number;
-  min_stock: number | null;
   is_low_stock: boolean;
 }
 
 interface InventoryProps {
   sucursal: SucursalItem;
-  warehouse: WarehouseInfo;
+  almacen: WarehouseInfo;
   inventory: InventoryItem[];
 }
 
-export default function WarehouseInventory({ sucursal, warehouse, inventory }: InventoryProps) {
+export default function WarehouseInventory({ sucursal, almacen, inventory }: InventoryProps) {
   const breadcrumbs: BreadcrumbItem[] = [
     {
-      title: "Inventario por almacén",
-      href: `/sucursales/${sucursal.id}/inventario`,
+      title: "Almacénes",
+      href: `/sucursal/${sucursal.id}/almacenes/index`,
     },
     {
-      title: warehouse.name,
-      href: `/sucursales/${sucursal.id}/inventario/${warehouse.id}`,
+      title: almacen.nombre,
+      href: `/sucursal/${sucursal.id}/almacen/${almacen.id}`,
     },
   ];
 
@@ -51,7 +50,7 @@ export default function WarehouseInventory({ sucursal, warehouse, inventory }: I
 
   return (
     <AppLayoutOwnership breadcrumbs={breadcrumbs}>
-      <Head title={`${warehouse.name} - ${sucursal.nombre}`} />
+      <Head title={`${almacen.nombre} - ${sucursal.nombre}`} />
       <SucursalPartialLayout>
         <div className="space-y-6">
           {/* Header */}
@@ -59,19 +58,22 @@ export default function WarehouseInventory({ sucursal, warehouse, inventory }: I
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <HeadingSmall
-                  title={warehouse.name}
-                  description={warehouse.description || "Inventario del almacén"}
+                  title={almacen.nombre}
+                  description={almacen.descripcion || "Inventario del almacén"}
                 />
-                {warehouse.is_default && (
-                  <Badge variant="secondary">Default</Badge>
-                )}
-                <Badge variant={warehouse.status === "active" ? "default" : "secondary"}>
-                  {warehouse.status === "active" ? "Activo" : "Inactivo"}
+                
+                <Badge variant={almacen.activo ? "default" : "secondary"}>
+                  {almacen.activo ? "Activo" : "Inactivo"}
                 </Badge>
               </div>
+              {almacen.ubicacion && (
+                <p className="text-sm text-muted-foreground">
+                  Ubicación: {almacen.ubicacion}
+                </p>
+              )}
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/sucursales/${sucursal.id}/inventario`}>
+              <Link href={`/sucursal/${sucursal.id}/almacenes/index`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver
               </Link>
@@ -139,7 +141,6 @@ export default function WarehouseInventory({ sucursal, warehouse, inventory }: I
                     <TableHead>SKU</TableHead>
                     <TableHead>Tipo de venta</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="text-right">Stock mínimo</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -156,11 +157,6 @@ export default function WarehouseInventory({ sucursal, warehouse, inventory }: I
                       <TableCell className="text-right">
                         <span className={`font-mono font-semibold ${item.is_low_stock ? 'text-orange-600' : ''}`}>
                           {item.stock}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="font-mono text-sm text-muted-foreground">
-                          {item.min_stock ?? '—'}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">

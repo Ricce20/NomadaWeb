@@ -83,7 +83,7 @@ export interface Horarios {
 }
 
 export interface SucursalItem {
-  id: number;
+  id: number |string;
   nombre: string;
   direccion_completa: string | null;
   telefono: string | null;
@@ -91,6 +91,8 @@ export interface SucursalItem {
   horarios: Horarios | null;
   codigo_postal: string | null;
   updated_at: Date; // Laravel envía fechas como string ISO
+  latitud: number | null;
+  longitud: number | null;
 }
 
 

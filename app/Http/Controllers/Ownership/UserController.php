@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Sucursal;
 use App\Models\SucursalUsuario;
+use App\Models\Negocio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -111,8 +112,15 @@ class UserController extends Controller
         $negocioId = $this->getNegocioId();
 
         if(!$negocioId){
-            return reditec()->back()->with(['error' => 'negocio no encontrado']);
+            return redirect()->back()->with(['error' => 'negocio no encontrado']);
         }
+
+        $negocio = Negocio::find($negocioId);
+        if(!$negocio){
+            return redirect()->back()->with(['error' => 'negocio no encontrado']);
+        }
+
+        
 
         // Verificar que la sucursal pertenece al negocio
         $sucursal = Sucursal::where('id', $validated['sucursal_id'])
@@ -120,15 +128,18 @@ class UserController extends Controller
             ->first();
 
         if(!$sucursal){
-            return reditec()->back()->with(['error' => 'sucursal no encontrado']);
+            return redirect()->back()->with(['error' => 'sucursal no encontrado']);
 
         }
 
+        // Generar prefix del negocio y concatenarlo al username
+        $prefix = User::generateBusinessPrefix($negocioId);
+        $username = "{$prefix}_{$validated['username']}";
 
         // Crear el usuario
         $usuario = User::create([
             'name' => $validated['name'],
-            'username' => $validated['username'],
+            'username' => $username,
             'password' => Hash::make($validated['password']),
             'type' => $validated['type'],
         ]);

@@ -1,14 +1,15 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ownership\SucursalController;
-use App\Http\Controllers\ownership\EmpleadoController;
-use App\Http\Controllers\ownership\UserController;
-use App\Http\Controllers\ownership\AlmacenController;
-use App\Http\Controllers\ownership\BranchProductController;
-use App\Http\Controllers\ownership\VehiculoController;
-use App\Http\Controllers\ownership\NegocioClienteController;
-
-
+use App\Http\Controllers\Ownership\SucursalController;
+use App\Http\Controllers\Ownership\EmpleadoController;
+use App\Http\Controllers\Ownership\UserController;
+use App\Http\Controllers\Ownership\AlmacenController;
+use App\Http\Controllers\Ownership\BranchProductController;
+use App\Http\Controllers\Ownership\VehiculoController;
+use App\Http\Controllers\Ownership\NegocioClienteController;
+use App\Http\Controllers\Api\ApiNegocioController;
+use App\Http\Controllers\empleados\PedidosController;
+use App\Http\Controllers\Ownership\InventoryMovementController;
 Route::middleware('auth')->group(function () {
     Route::prefix('sucursales')->name('sucursales.')->group(function () {
         //sucursales
@@ -45,7 +46,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/registrar/almacen',[AlmacenController::class,'store'])->name('almacen.store');
         Route::put('/{id}/almacen/update',[AlmacenController::class,'update'])->name('almacen.update');
         Route::delete('/{id}/almacen/delete',[AlmacenController::class,'delete'])->name('almacen.delete');
-        
+        Route::get('/{sucursalId}/almacen/{almacenId}',[AlmacenController::class,'verInventario'])->name('almacen.inventario');
+        Route::get('/gestion/almacenes',[AlmacenController::class,'obtenerAlmacenesPorSucursal'])->name('almacen.gestion');
+        Route::get('/almacen/{id}/inventario',[AlmacenController::class,'verInventarioParaEmpleado'])->name('almacen.inventario-empleado');
+        Route::get('/inventario/movimientos',[InventoryMovementController::class,'indexParaEmpleado'])->name('inventario.ver-movimientos-inventario');
+        Route::get('/inventario/generar-movimiento',[InventoryMovementController::class,'createParaEmpleado'])->name('inventario.crear-movimiento-inventario-empleado');
+        Route::post('/inventario/generar-registro', [InventoryMovementController::class, 'store'])->name('inventario.generar.store');
+        Route::get('/inventario/movimiento/{id}/detalles',[InventoryMovementController::class,'show'])->name('inventario.ver-movimiento-empleado');
+        Route::post('/inventario/movimiento/{id}/completar',[InventoryMovementController::class,'completeMovement'])->name('inventario.completar-movimiento-empleado');
+        Route::post('/inventario/movimiento/{id}/cancelar',[InventoryMovementController::class,'cancelMovement'])->name('inventario.cancelar-movimiento-empleado');
+        Route::post('/cliente/generar-pedido',[PedidosController::class,'store'])->name('pedido.generar');
         //vehiculos
         Route::get('{sucurslId}/vehiculos/index',[VehiculoController::class,'index'])->name('vehiculo.index');
         Route::post('/registrar/hehiculo',[VehiculoController::class,'store'])->name('vehiculo.store');
@@ -62,6 +72,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/{sucursal}/productos', function (\App\Models\Sucursal $sucursal) {
             return redirect()->route('sucursales.productos.index', $sucursal);
         })->name('productos.redirect');
+
+        Route::get('/clientes-negocio/index',[NegocioClienteController::class,'clientes'])->name('cliente.negocio.index');
+        Route::get('/pedidos/buscar-productos', [ApiNegocioController::class, 'searchProducts'])
+        ->name('orders.search-products');
+
+        //pedidos
+        Route::get('/cliente/{id}/generar-pedido',[PedidosController::class,'crearPedidoLocal'])->name('pedido.crear-local');
+        Route::get('/pedidos/index',[PedidosController::class,'index'])->name('pedido.panel');
+        Route::get('/pedidos/{pedido}',[PedidosController::class,'show'])->name('pedido.show');
+        Route::post('/pedidos/{pedido}/asignar-vehiculo',[PedidosController::class,'asignarVehiculo'])->name('pedido.asignar-vehiculo');
+        Route::post('/pedidos/{pedido}/completar',[PedidosController::class,'completarPedido'])->name('pedido.completar');
+        Route::post('/pedidos/{pedido}/cancelar',[PedidosController::class,'cancelarPedido'])->name('pedido.cancelar');
+        Route::get('/pedidos/ver/historial',[PedidosController::class,'historial'])->name('pedido.historial');
+        Route::put('/pedidos/edit/{pedido}/actualizar-asignacion',[PedidosController::class,'actualizarAsignacion'])->name('pedido.actualizar-asignacion');
+        Route::put('/pedidos/{id}/confirmar',[PedidosController::class,'confirmarPedido'])->name('pedido.confirmar');
     });
 
     // Productos por sucursal (Route Model Binding)
@@ -81,14 +106,14 @@ Route::middleware('auth')->group(function () {
             
             // Dashboard de inventario por almacén (solo lectura) - Accesible para owner y warehouse_man
             Route::middleware(['role:owner,warehouse_man'])->group(function () {
-                Route::get('inventario', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'index'])->name('inventario.index');
-                Route::get('inventario/{warehouse}', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'show'])->name('inventario.show');
-                
+                // Route::get('inventario', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'index'])->name('inventario.index');
+                // Route::get('inventario/{warehouse}', [\App\Http\Controllers\Ownership\WarehouseDashboardController::class, 'show'])->name('inventario.show');
                 // Movimientos de inventario (entradas y ajustes)
                 Route::get('movimientos-inventario', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'index'])->name('movimientos-inventario.index');
                 Route::get('movimientos-inventario/create', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'create'])->name('movimientos-inventario.create');
-                Route::post('movimientos-inventario', [\App\Http\Controllers\Ownership\InventoryMovementController::class, 'store'])->name('movimientos-inventario.store');
+                
             });
+            
         });
 
 });

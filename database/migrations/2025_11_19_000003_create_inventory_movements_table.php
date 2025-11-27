@@ -13,18 +13,20 @@ return new class extends Migration
     {
         Schema::create('inventory_movements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
-            $table->foreignId('product_base_branch_id')->constrained('product_base_branch')->onDelete('cascade');
-            $table->string('type'); // 'in', 'out', 'adjust'
-            $table->integer('quantity');
-            $table->integer('previous_stock')->nullable();
-            $table->integer('new_stock')->nullable();
+            $table->foreignId('almacen_id')->constrained('almacenes')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('sucursal_id')->constrained('sucursales')->onDelete('cascade');
+            $table->string('movement_number')->unique(); // Número único de movimiento
+            $table->enum('type',['in','out','adjust']); // 'in', 'out', 'adjust'
+            // $table->integer('quantity');
+            // $table->integer('previous_stock')->nullable();
+            // $table->integer('new_stock')->nullable();
             $table->text('reason')->nullable();
+            $table->enum('status', ['pendiente', 'completado', 'cancelado'])->default('pendiente');
             $table->foreignId('performed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
             
-            $table->index('warehouse_id');
-            $table->index('product_base_branch_id');
+            $table->index('almacen_id');
+            $table->index('sucursal_id');
             $table->index('type');
             $table->index('created_at');
         });

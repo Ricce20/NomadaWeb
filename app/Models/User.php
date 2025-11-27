@@ -213,4 +213,32 @@ class User extends Authenticatable
 
         return false;
     }
+
+    /**
+     * Generar un prefix único para los usernames basado en el negocio
+     * Combina primeras letras del nombre + ID del negocio para garantizar unicidad
+     * Ejemplo: "NOM002" para "Nomada" (ID 2), "CAF005" para "Café Bella" (ID 5)
+     */
+    public static function generateBusinessPrefix(int $negocioId): string
+    {
+        $negocio = Negocio::find($negocioId);
+        
+        if (!$negocio) {
+            return 'USR' . str_pad($negocioId, 3, '0', STR_PAD_LEFT);
+        }
+
+        // Obtener las primeras 3 letras del nombre (sin espacios, convertidas a mayúsculas)
+        $nombreLimpio = preg_replace('/[^a-zA-Z]/', '', $negocio->nombre);
+        $iniciales = strtoupper(substr($nombreLimpio, 0, 3));
+        
+        // Si el nombre tiene menos de 3 letras, rellenar con asteriscos o letras del ID
+        if (strlen($iniciales) < 3) {
+            $iniciales = str_pad($iniciales, 3, '*');
+        }
+        
+        // Agregar el ID del negocio formateado a 3 dígitos para garantizar unicidad
+        $prefix = $iniciales . str_pad($negocioId, 3, '0', STR_PAD_LEFT);
+
+        return $prefix;
+    }
 }

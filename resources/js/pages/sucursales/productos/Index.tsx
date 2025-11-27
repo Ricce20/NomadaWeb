@@ -28,7 +28,6 @@ interface ProductoItem {
   category: string;
   unit: string;
   price: string;
-  stock: number;
   sale_type: string;
   image?: string | null;
   branch_image?: string | null;
@@ -202,6 +201,8 @@ export default function ProductosIndex({
     );
   }, [filtersData]);
 
+  
+
   return (
     <AppLayoutOwnership breadcrumbs={breadcrumbs}>
       <Head title={`Productos - ${sucursal.nombre}`} />
@@ -337,10 +338,8 @@ export default function ProductosIndex({
                     <TableHead>Marca</TableHead>
                     <TableHead>Categoría</TableHead>
                     <TableHead className="text-right">Precio</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
                     <TableHead>UoM</TableHead>
                     <TableHead>Tipo de venta</TableHead>
-                    <TableHead className="text-center">Estado</TableHead>
                     {can.manage && <TableHead className="text-right">Acciones</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -373,9 +372,6 @@ export default function ProductosIndex({
                           ${parseFloat(item.price).toFixed(2)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <span className="font-mono">{item.stock}</span>
-                      </TableCell>
                       <TableCell>
                         <span className="text-sm">{item.unit || '—'}</span>
                       </TableCell>
@@ -383,11 +379,6 @@ export default function ProductosIndex({
                         <span className="text-sm text-muted-foreground">
                           {getSaleTypeLabel(item.sale_type)}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={item.stock > 0 ? "default" : "secondary"}>
-                          {item.stock > 0 ? "Disponible" : "Sin stock"}
-                        </Badge>
                       </TableCell>
                       {can.manage && (
                         <TableCell className="text-right">

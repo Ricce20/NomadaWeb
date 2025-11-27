@@ -358,7 +358,8 @@ class ApiNegocioController extends Controller
                             'category_id',
                             'uom_id',
                             'tax_code',
-                            'specs_json'
+                            'specs_json',
+                            'description'
                         ])
                         ->with([
                             'brand:id,name',
@@ -428,6 +429,7 @@ class ApiNegocioController extends Controller
             $perPage = $request->input('per_page', self::PER_PAGE);
             $paginated = $query->paginate($perPage)->withQueryString();
             
+            
             return response()->json([
                 'success' => true,
                 'data' => $paginated->items(),
@@ -454,6 +456,142 @@ class ApiNegocioController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener los productos',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    public function searchProducts(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado'
+                ], 401);
+            }
+
+            // Validación - warehouse_id es completamente opcional
+            $validated = $request->validate([
+                'search' => 'required|string|max:255',
+                'sucursal_id' => 'required|integer|exists:sucursales,id',
+                'warehouse_id' => 'nullable|integer|exists:almacenes,id'
+            ]);
+
+            $sucursalId = $validated['sucursal_id'];
+            $searchTerm = trim($validated['search']);
+            $warehouseId = $validated['warehouse_id'] ?? null;
+
+            // Verificar que el usuario tenga acceso a esta sucursal
+            $userHasAccess = $user->sucursales()
+                ->where('sucursales.id', $sucursalId)
+                ->exists();
+
+            if (!$userHasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes acceso a esta sucursal'
+                ], 403);
+            }
+
+            // Buscar productos en la sucursal
+            $productos = ProductBaseBranch::query()
+                ->where('branch_id', $sucursalId)
+                ->whereHas('productBase', function($q) use ($searchTerm) {
+                    $q->where('is_active', true)
+                    ->where(function($subQ) use ($searchTerm) {
+                        $subQ->where('name', 'like', "%{$searchTerm}%")
+                            ->orWhere('sku_base', 'like', "%{$searchTerm}%");
+                    });
+                })
+                ->with([
+                    'productBase' => function($q) {
+                        $q->select('id', 'sku_base', 'name', 'brand_id', 'category_id', 'uom_id', 'tax_code', 'specs_json','description')
+                        ->with([
+                            'brand:id,name', 
+                            'category:id,name', 
+                            'uom:id,name,abbreviation'
+                        ]);
+                    },
+                    'warehouseProducts' => function($q) use ($sucursalId, $warehouseId) {
+                        // Filtrar por almacenes de la sucursal actual
+                        $q->whereHas('warehouse', function($warehouseQ) use ($sucursalId) {
+                            $warehouseQ->where('sucursal_id', $sucursalId);
+                        });
+                        
+                        // Si se especifica warehouse_id, filtrar solo ese almacén
+                        if ($warehouseId) {
+                            $q->where('almacen_id', $warehouseId);
+                        }
+                        
+                        $q->select('id', 'almacen_id', 'product_base_branch_id', 'stock')
+                        ->with('warehouse:id,nombre,sucursal_id'); // Nota: el campo es 'nombre' no 'name'
+                    }
+                ])
+                ->select('id', 'product_base_id', 'branch_id', 'price', 'sale_type', 'image_path')
+                ->limit(20)
+                ->get()
+                ->map(function($productBranch) use ($warehouseId) {
+                    $productBase = $productBranch->productBase;
+                    
+                    // Calcular stock total
+                    $currentStock = $productBranch->warehouseProducts->sum('stock');
+                    
+                    // Preparar información de stocks por almacén
+                    $warehouseStocks = $productBranch->warehouseProducts->map(function($wp) {
+                        return [
+                            'warehouse_id' => $wp->almacen_id,
+                            'warehouse_name' => $wp->warehouse->nombre ?? 'Sin nombre',
+                            'stock' => (float) $wp->stock
+                        ];
+                    })->toArray();
+
+                    return [
+                        'id' => $productBranch->id,
+                        'product_base_id' => $productBranch->product_base_id,
+                        'nombre' => $productBase->name,
+                        'descripcion' => $productBase->description ?? '',
+                        'sku' => $productBase->sku_base,
+                        'unidad_medida' => $productBase->uom->abbreviation ?? $productBase->uom->name ?? 'UND',
+                        'precio' => (float) $productBranch->price,
+                        'imagen_url' => $productBranch->image_path 
+                            ? asset('storage/' . $productBranch->image_path) 
+                            : null,
+                        'marca' => $productBase->brand->name ?? null,
+                        'categoria' => $productBase->category->name ?? null,
+                        'sale_type' => $productBranch->sale_type,
+                        'current_stock' => (float) $currentStock,
+                        'warehouse_stocks' => $warehouseStocks,
+                        'filtered_by_warehouse' => $warehouseId !== null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $productos,
+                'filters' => [
+                    'search_term' => $searchTerm,
+                    'sucursal_id' => $sucursalId,
+                    'warehouse_id' => $warehouseId
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos de validación incorrectos',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error en searchProducts: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar productos',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
