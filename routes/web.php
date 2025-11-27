@@ -76,7 +76,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('product-bases.force-delete');
         });
 
+    // Owner Dashboard - Requiere owner o super_admin
+    Route::get('owner/{business}/dashboard', [\App\Http\Controllers\Ownership\OwnerDashboardController::class, 'index'])
+        ->middleware('role:owner,super_admin')
+        ->name('owner.dashboard');
+    
+    // Ruta legacy de ownership (redirige al dashboard del primer negocio del owner)
     Route::get('ownership', function () {
+        $user = auth()->user();
+        if ($user->isOwner()) {
+            $negocioId = $user->negocio()->pluck('id')->first();
+            if ($negocioId) {
+                return redirect()->route('owner.dashboard', ['business' => $negocioId]);
+            }
+        }
         return Inertia::render('ownership');
     })->name('ownership');
     }); 
