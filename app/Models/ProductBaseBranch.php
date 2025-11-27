@@ -41,7 +41,18 @@ class ProductBaseBranch extends Model
         'branch_id' => 'integer',
         'sale_type' => 'string',
     ];
+    // Agregar image_url automáticamente al serializar
+    protected $appends = ['image_url'];
 
+    /**
+     * Accessor para obtener la URL completa de la imagen
+     */
+    public function getImageUrlAttribute()
+    {
+        return $this->image_path 
+            ? asset('storage/' . $this->image_path) 
+            : null;
+    }
     public function productBase()
     {
         return $this->belongsTo(ProductBase::class, 'product_base_id');
@@ -73,7 +84,7 @@ class ProductBaseBranch extends Model
      */
     public function recalculateStockFromWarehouses(): void
     {
-        $total = $this->warehouseProducts()->sum('stock');
+        $total = $this->warehouseProducts()->where('activo',true)->sum('stock');
         $this->stock = $total;
         $this->save();
     }

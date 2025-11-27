@@ -77,7 +77,6 @@ class BranchProductController extends Controller
                 'category' => $base?->category?->name ?? 'N/A',
                 'unit' => $base?->uom?->abbreviation ?? 'N/A',
                 'price' => $item->price,
-                'stock' => $item->stock,
                 'sale_type' => $item->sale_type ?? 'unit',
                 'branch_image' => $item->image_path,
                 'catalog_image' => $base?->images->first()?->path,
@@ -126,7 +125,6 @@ class BranchProductController extends Controller
             ],
             [
                 'price' => $validated['price'],
-                'stock' => 0, // Inicializado en 0, se actualizará desde movimientos de inventario
                 'sale_type' => $validated['sale_type'] ?? 'unit',
             ]
         );

@@ -10,14 +10,16 @@ class InventoryMovement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'warehouse_id',
-        'product_base_branch_id',
+        'almacen_id',
+        'sucursal_id',
         'type',
-        'quantity',
-        'previous_stock',
-        'new_stock',
+        // 'quantity',
+        // 'previous_stock',
+        // 'new_stock',
         'reason',
         'performed_by',
+        'status',
+        'movement_number',
     ];
 
     protected $casts = [
@@ -34,7 +36,7 @@ class InventoryMovement extends Model
      */
     public function warehouse()
     {
-        return $this->belongsTo(Warehouse::class);
+        return $this->belongsTo(Almacen::class,'almacen_id');
     }
 
     /**
@@ -51,5 +53,28 @@ class InventoryMovement extends Model
     public function performedBy()
     {
         return $this->belongsTo(User::class, 'performed_by');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(InventoryMovementDetail::class);
+    }
+
+    // Generar número de movimiento automático
+    public static function generateMovementNumber($type)
+    {
+        $prefix = match($type) {
+            'entrada' => 'ENT',
+            'salida' => 'SAL', 
+            'ajuste' => 'AJT',
+            'transferencia' => 'TRA',
+            default => 'MOV'
+        };
+
+        $count = self::where('movement_type', $type)
+            ->whereYear('created_at', now()->year)
+            ->count() + 1;
+
+        return $prefix . '-' . now()->format('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 }

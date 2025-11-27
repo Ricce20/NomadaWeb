@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class WarehouseProduct extends Model
 {
     use HasFactory;
+    
+    protected $table = "almacen_productos";
 
     protected $fillable = [
-        'warehouse_id',
+        'almacen_id',
         'product_base_branch_id',
         'stock',
         'min_stock',
@@ -28,7 +30,7 @@ class WarehouseProduct extends Model
      */
     public function warehouse()
     {
-        return $this->belongsTo(Warehouse::class);
+        return $this->belongsTo(Almacen::class,'almacen_id');
     }
 
     /**

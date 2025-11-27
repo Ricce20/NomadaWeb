@@ -23,7 +23,7 @@ interface NavItemWithRoles extends NavItem {
 /**
  * Obtiene los items del menú lateral según el rol del usuario
  */
-const getSidebarNavItems = (sucursalId: number, userType?: string): NavItem[] => {
+const getSidebarNavItems = (sucursalId: number , userType?: string): NavItem[] => {
     // Definir todos los items con sus roles permitidos
     const allItems: NavItemWithRoles[] = [
         { 
@@ -48,18 +48,6 @@ const getSidebarNavItems = (sucursalId: number, userType?: string): NavItem[] =>
             title: 'Productos', 
             href: productos.index(sucursalId).url, 
             icon: Boxes,
-            allowedRoles: ['owner', 'super_admin', 'manager', 'warehouse_man']
-        },
-        { 
-            title: 'Inventario', 
-            href: `/sucursales/${sucursalId}/inventario`, 
-            icon: PackageSearch,
-            allowedRoles: ['owner', 'super_admin', 'manager', 'warehouse_man']
-        },
-        { 
-            title: 'Movimientos', 
-            href: `/sucursales/${sucursalId}/movimientos-inventario`, 
-            icon: PackageSearch,
             allowedRoles: ['owner', 'super_admin', 'manager', 'warehouse_man']
         },
         { 

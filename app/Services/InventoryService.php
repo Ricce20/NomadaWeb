@@ -9,83 +9,262 @@ use App\Models\InventoryMovement;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-
+use App\Models\Almacen;
+use App\Models\InventoryMovementDetail;
 class InventoryService
 {
-    /**
-     * Registra un movimiento de inventario en un almacén.
-     * 
-     * @param Warehouse $warehouse El almacén donde se realiza el movimiento
-     * @param ProductBaseBranch $productBaseBranch El producto por sucursal
-     * @param string $type Tipo de movimiento: 'in' (entrada), 'out' (salida), 'adjust' (ajuste)
-     * @param int $quantity Cantidad del movimiento (siempre positiva)
-     * @param User|null $user Usuario que realiza el movimiento
-     * @param string|null $reason Razón o descripción del movimiento
-     * 
-     * @return InventoryMovement El movimiento registrado
-     * 
-     * @throws InvalidArgumentException Si el tipo de movimiento no es válido
-     */
     public function registerMovement(
-        Warehouse $warehouse,
-        ProductBaseBranch $productBaseBranch,
+        Almacen $warehouse,
+        array $products, // Array de productos con sus cantidades y notas
         string $type,
-        int $quantity,
         ?User $user = null,
-        ?string $reason = null
+        ?string $reason = null,
+        string $status = 'pendiente',
+        string|int $sucursal_id
     ): InventoryMovement {
         // Validar tipo de movimiento
-        if (!in_array($type, ['in', 'out', 'adjust'])) {
-            throw new InvalidArgumentException("Tipo de movimiento inválido: {$type}. Debe ser 'in', 'out' o 'adjust'.");
+        if (!in_array($type, ['in', 'adjust', 'out'])) {
+            throw new InvalidArgumentException("Tipo de movimiento inválido: {$type}. Debe ser 'in', 'adjust' o 'out'.");
         }
 
-        return DB::transaction(function () use ($warehouse, $productBaseBranch, $type, $quantity, $user, $reason) {
-            // Obtener o crear el registro de producto en el almacén
-            $warehouseProduct = WarehouseProduct::firstOrCreate(
-                [
-                    'warehouse_id' => $warehouse->id,
-                    'product_base_branch_id' => $productBaseBranch->id,
-                ],
-                [
-                    'stock' => 0,
-                    'min_stock' => null,
-                ]
-            );
+        // Validar que hay al menos un producto
+        if (empty($products)) {
+            throw new InvalidArgumentException("Debe proporcionar al menos un producto para el movimiento.");
+        }
 
-            // Guardar stock anterior
-            $previousStock = $warehouseProduct->stock;
-
-            // Calcular nuevo stock según el tipo de movimiento
-            $newStock = match ($type) {
-                'in' => $previousStock + $quantity,      // Entrada: suma
-                'out' => $previousStock - $quantity,     // Salida: resta
-                'adjust' => $quantity,                   // Ajuste: establece el valor exacto
-            };
-
-            // Actualizar stock en warehouse_products
-            $warehouseProduct->stock = $newStock;
-            $warehouseProduct->save();
-
-            // Crear registro del movimiento
+        return DB::transaction(function () use ($warehouse, $products, $type, $user, $reason, $status,$sucursal_id) {
+            // Generar número de movimiento único
+            $movementNumber = $this->generateMovementNumber($type);
+            
+            // Crear cabecera del movimiento
             $movement = InventoryMovement::create([
-                'warehouse_id' => $warehouse->id,
-                'product_base_branch_id' => $productBaseBranch->id,
+                'movement_number' => $movementNumber,
+                'almacen_id' => $warehouse->id,
+                'sucursal_id' => $sucursal_id,
                 'type' => $type,
-                'quantity' => $quantity,
-                'previous_stock' => $previousStock,
-                'new_stock' => $newStock,
                 'reason' => $reason,
                 'performed_by' => $user?->id,
+                'status' => $status,
+                'total_quantity' => 0, // Se calculará después
             ]);
 
-            // Sincronizamos el stock general de la sucursal (ProductBaseBranch.stock)
-            // como espejo de la suma de todos los almacenes (warehouse_products).
-            // Esto mantiene ProductBaseBranch.stock actualizado automáticamente
-            // sin necesidad de edición manual.
-            $productBaseBranch->recalculateStockFromWarehouses();
+            $totalQuantity = 0;
+
+            // Procesar cada producto
+            foreach ($products as $productData) {
+                // Validar datos del producto
+                if (empty($productData['product_base_branch_id']) || empty($productData['quantity'])) {
+                    throw new InvalidArgumentException("Datos incompletos para uno de los productos.");
+                }
+
+                $productBaseBranch = ProductBaseBranch::find($productData['product_base_branch_id']);
+                
+                if (!$productBaseBranch) {
+                    throw new InvalidArgumentException("Producto no encontrado: {$productData['product_base_branch_id']}");
+                }
+
+                $quantity = (int) $productData['quantity'];
+                $notes = $productData['notes'] ?? null;
+
+                // Validar cantidad
+                if ($quantity <= 0) {
+                    throw new InvalidArgumentException("La cantidad debe ser mayor a 0 para el producto: {$productBaseBranch->productBase->name}");
+                }
+
+                // Obtener o crear el registro de producto en el almacén
+                $warehouseProduct = WarehouseProduct::firstOrCreate(
+                    [
+                        'almacen_id' => $warehouse->id,
+                        'product_base_branch_id' => $productBaseBranch->id,
+                    ],
+                    [
+                        'stock' => 0,
+                        // 'min_stock' => null,
+                    ]
+                );
+
+                // Guardar stock anterior
+                $previousStock = $warehouseProduct->stock;
+
+                // Calcular nuevo stock según el tipo de movimiento
+                $newStock = match ($type) {
+                    'in' => $previousStock + $quantity,      // Entrada: suma
+                    'adjust' => $quantity,                   // Ajuste: establece el valor exacto
+                    'out' => $previousStock - $quantity,     // Salida: resta
+                };
+
+                // Validar que no haya stock negativo
+                if ($newStock < 0) {
+                    throw new InvalidArgumentException(
+                        "No hay suficiente stock para {$productBaseBranch->productBase->name}. " .
+                        "Stock disponible: {$previousStock}, cantidad solicitada: {$quantity}"
+                    );
+                }
+
+                // Solo actualizar stock físico si el movimiento está completado
+                if ($status === 'completado') {
+                    $warehouseProduct->stock = $newStock;
+                    $warehouseProduct->save();
+
+                    // Sincronizar stock general de la sucursal
+                    $productBaseBranch->recalculateStockFromWarehouses();
+                }
+
+                // Crear detalle del movimiento
+                InventoryMovementDetail::create([
+                    'inventory_movement_id' => $movement->id,
+                    'product_base_branch_id' => $productBaseBranch->id,
+                    'quantity' => $quantity,
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $status === 'completado' ? $newStock : $previousStock,
+                    'notes' => $notes,
+                ]);
+
+                $totalQuantity += $quantity;
+            }
+
+            // Actualizar cantidad total en la cabecera
+            $movement->update(['total_quantity' => $totalQuantity]);
 
             return $movement;
         });
+    }
+
+    /**
+     * Genera un número único para el movimiento
+     */
+    protected function generateMovementNumber(string $type): string
+    {
+        $prefix = match($type) {
+            'in' => 'ENT',
+            'out' => 'SAL',
+            'adjust' => 'AJT',
+            default => 'MOV'
+        };
+
+        $date = now()->format('Ymd');
+        
+        // Contar movimientos del día
+        $count = InventoryMovement::whereDate('created_at', today())->count() + 1;
+        
+        return "{$prefix}-{$date}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Actualiza el estado de un movimiento existente
+     */
+    public function updateMovementStatus(InventoryMovement $movement, string $status, ?User $user = null): InventoryMovement
+    {
+        // Validaciones de estado
+        $validTransitions = [
+            'pendiente' => ['completado', 'cancelado'],
+            'completado' => ['cancelado'],
+            'cancelado' => ['pendiente'],
+        ];
+
+        if (!in_array($status, $validTransitions[$movement->status] ?? [])) {
+            throw new InvalidArgumentException(
+                "Transición de estado no válida: {$movement->status} → {$status}"
+            );
+        }
+
+        return DB::transaction(function () use ($movement, $status, $user) {
+            $oldStatus = $movement->status;
+            $movement->status = $status;
+
+            // Si se está completando un movimiento pendiente, aplicar los cambios de stock
+            if ($status === 'completado' && $oldStatus === 'pendiente') {
+                $this->applyMovementStock($movement);
+                // $movement->approved_by = $user?->id;
+            }
+
+            // Si se está cancelando un movimiento completado, revertir los cambios de stock
+            if ($status === 'cancelado' && $oldStatus === 'completado') {
+                $this->revertMovementStock($movement);
+            }
+
+            // Si se está reactivando un movimiento cancelado, quitar approved_by
+            if ($status === 'pendiente' && $oldStatus === 'cancelado') {
+                // $movement->approved_by = null;
+            }
+
+            $movement->save();
+
+            return $movement;
+        });
+    }
+
+    /**
+     * Aplica los cambios de stock de un movimiento
+     */
+    protected function applyMovementStock(InventoryMovement $movement): void
+    {
+        foreach ($movement->details as $detail) {
+
+            $warehouseProduct = WarehouseProduct::where([
+                'almacen_id' => $movement->almacen_id,
+                'product_base_branch_id' => $detail->product_base_branch_id,
+            ])->first();
+
+            if (!$warehouseProduct) {
+                throw new InvalidArgumentException("No existe registro de stock para este producto.");
+            }
+
+            // ⚠ VALIDACIÓN NUEVA ANTES DE MODIFICAR STOCK
+            if ($movement->type === 'out') {
+                if ($warehouseProduct->stock < $detail->quantity) {
+                    throw new InvalidArgumentException(
+                        "No es posible confirmar el movimiento. Stock insuficiente para "
+                        . $detail->productBaseBranch->productBase->name
+                        . ". Disponible: {$warehouseProduct->stock}, requerido: {$detail->quantity}"
+                    );
+                }
+            }
+
+            // 🧮 Calcular el nuevo stock después de validar
+            $newStock = match ($movement->type) {
+                'in' => $detail->previous_stock + $detail->quantity,
+                'out' => $warehouseProduct->stock - $detail->quantity,
+                'adjust' => $detail->quantity,
+                default => $detail->previous_stock
+            };
+
+            $warehouseProduct->stock = $newStock;
+            $warehouseProduct->save();
+
+            $detail->new_stock = $newStock;
+            $detail->save();
+
+            // Sincronizar stock general
+            $detail->productBaseBranch->recalculateStockFromWarehouses();
+        }
+    }
+
+
+    /**
+     * Revierte los cambios de stock de un movimiento
+     */
+    protected function revertMovementStock(InventoryMovement $movement): void
+    {
+        foreach ($movement->details as $detail) {
+            $warehouseProduct = WarehouseProduct::where([
+                'almacen_id' => $movement->almacen_id,
+                'product_base_branch_id' => $detail->product_base_branch_id,
+            ])->first();
+
+            if ($warehouseProduct) {
+                // Revertir al stock anterior
+                $warehouseProduct->stock = $detail->previous_stock;
+                $warehouseProduct->save();
+
+                // Restaurar el nuevo stock en el detalle
+                $detail->new_stock = $detail->previous_stock;
+                $detail->save();
+
+                // Sincronizar stock general de la sucursal
+                $detail->productBaseBranch->recalculateStockFromWarehouses();
+            }
+        }
     }
 
     /**

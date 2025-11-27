@@ -22,4 +22,20 @@ class Almacen extends Model
     public function sucursal(){
         return $this->belongsTo(Sucursal::class);
     }
+
+     /**
+     * Relación con los productos del almacén
+     */
+    public function warehouseProducts()
+    {
+        return $this->hasMany(WarehouseProduct::class);
+    }
+
+    /**
+     * Relación con los movimientos de inventario
+     */
+    public function inventoryMovements()
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
 }

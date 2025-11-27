@@ -31,6 +31,7 @@ class ProductBase extends Model
         'created_by',
         'approved_at',
         'rejected_at',
+        'description',
     ];
 
     protected $casts = [

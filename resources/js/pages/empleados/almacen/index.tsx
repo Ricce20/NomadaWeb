@@ -5,8 +5,6 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import AppLayoutOwnership from "@/layouts/app-layout-ownership";
-import SucursalPartialLayout from "@/layouts/sucursales/layout-partials";
 import { BreadcrumbItem, PaginatedResponse, SucursalItem, Almacen } from "@/types";
 import { Head, Link, router } from "@inertiajs/react";
 import { debounce } from "lodash";
@@ -26,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import AlmacenDialog from "@/components/almacen-dialog";
 import almacen from "@/routes/sucursal/almacen";
+import sucursal from "@/routes/sucursal";
+import AppLayout from "@/layouts/app-layout";
 
 type TrashedFilter = "" | "with" | "only";
 
@@ -43,14 +43,15 @@ interface IndexProps {
   filters: Filters;
   sucursal: SucursalItem;
 }
-
-export default function Almacenes({ sucursal, items, filters }: IndexProps) {
-  const breadcrumbs: BreadcrumbItem[] = [
+const breadcrumbs: BreadcrumbItem[] = [
     {
-      title: "Almacenes",
-      href: almacen.index(sucursal.id).url,
+      title: "Gestion de Inventarios de almacenes",
+      href: sucursal.almacen.gestion().url,
     },
   ];
+
+export default function AlmacenesFromEmpleados({ sucursal, items, filters }: IndexProps) {
+  
 
   const [filtersData, setFilters] = useState<Filters>(filters);
 
@@ -138,9 +139,8 @@ export default function Almacenes({ sucursal, items, filters }: IndexProps) {
   }, [debouncedSearch]);
 
   return (
-    <AppLayoutOwnership breadcrumbs={breadcrumbs}>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Almacenes" />
-      <SucursalPartialLayout>
         <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
           {/* Heading */}
           <div className="flex items-center gap-4">
@@ -149,17 +149,7 @@ export default function Almacenes({ sucursal, items, filters }: IndexProps) {
               description="Aquí puedes administrar los almacenes de tu negocio"
             />
 
-            {/* Botón para agregar empleado con Dialog */}
-            <AlmacenDialog
-              sucursalId={sucursal.id}
-              mode="create"
-              trigger={
-                <Button className="ml-auto inline-flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Agregar Almacen
-                </Button>
-              }
-            />
+            
           </div>
 
           {/* Filtros y búsqueda */}
@@ -343,30 +333,10 @@ export default function Almacenes({ sucursal, items, filters }: IndexProps) {
                       <div className="flex items-center gap-2">
                         {!altItem.deleted_at ? (
                           <>
-                            {/* Botón de editar con Dialog */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div>
-                                  <AlmacenDialog
-                                    sucursalId={sucursal.id}
-                                    almacenData={altItem}
-                                    mode="edit"
-                                    trigger={
-                                      <button className="p-2 rounded-md transition-colors hover:bg-gray-400">
-                                        <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                                      </button>
-                                    }
-                                  />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Editar empleado</p>
-                              </TooltipContent>
-                            </Tooltip>
 
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Link href={almacen.inventario({ sucursalId: sucursal.id, almacenId: altItem.id }).url} className="p-2 rounded-md hover:bg-gray-200 transition-colors">
+                                <Link href={almacen.inventarioEmpleado({id: altItem.id }).url} className="p-2 rounded-md hover:bg-gray-200 transition-colors">
                                     <Warehouse className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                                 </Link>
                               </TooltipTrigger>
@@ -374,41 +344,7 @@ export default function Almacenes({ sucursal, items, filters }: IndexProps) {
                                 <p>Ver inventario</p>
                               </TooltipContent>
                             </Tooltip>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <button className="p-2 rounded-md hover:bg-red-50 transition-colors">
-                                        <Trash className="w-4 h-4 text-red-500 hover:text-red-700" />
-                                      </button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Esta acción eliminará permanentemente al empleado{" "}
-                                          <strong>{altItem.nombre}</strong>. Esta acción no se puede deshacer.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => handleDelete(altItem.id)}
-                                          className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
-                                        >
-                                          Eliminar
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Eliminar empleado</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            
                           </>
                         ) : (
                           <Badge variant="default" className="bg-red-500 hover:bg-red-600">
@@ -462,7 +398,6 @@ export default function Almacenes({ sucursal, items, filters }: IndexProps) {
             </>
           )}
         </div>
-      </SucursalPartialLayout>
-    </AppLayoutOwnership>
+    </AppLayout>
   );
 }
