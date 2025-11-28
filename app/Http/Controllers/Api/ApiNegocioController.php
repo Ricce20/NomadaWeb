@@ -42,7 +42,8 @@ class ApiNegocioController extends Controller
                         'latitud',
                         'longitud',
                         'negocio_id',
-                        'activo'
+                        'activo',
+                        'image_url'
                     ]);
             }])
             ->select([
@@ -169,7 +170,8 @@ class ApiNegocioController extends Controller
                             'codigo_postal',
                             'latitud',
                             'longitud',
-                            'negocio_id'
+                            'negocio_id',
+                            'image_url'
                         ]);
                 }])
                 ->firstOrFail();
@@ -215,7 +217,8 @@ class ApiNegocioController extends Controller
                     'nombre',
                     'direccion_completa',
                     'telefono',
-                    'negocio_id'
+                    'negocio_id',
+                    'image_url'
                 ])
                 ->firstOrFail();
 

@@ -27,6 +27,7 @@ class SucursalController extends Controller
             'horarios',
             'codigo_postal',
             'updated_at',
+            'image_url'
             
         )->get()->toArray();
         // dd($sucursales);
@@ -68,38 +69,51 @@ class SucursalController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'direccion_completa' => 'required|string|max:500',
-            'telefono' => 'required|string|max:10|unique:sucursales',
+            'telefono' => 'required|string|max:20|unique:sucursales',
             'horarios' => 'required|array',
             'codigo_postal' => 'required|string|max:5',
             'activo' => 'required|boolean',
             'latitud' => 'required|numeric',
             'longitud' => 'required|numeric',
+            'image_url' => 'nullable|file|image|max:2048'
         ]);
 
+        // Obtener el negocio una sola vez
+        $negocio = auth()->user()->negocio;
+        
         // Modificar el nombre para incluir el del negocio
-        $nombreNegocio = auth()->user()->negocio()->first()->nombre;
-        $nombreCompleto = $nombreNegocio . ' - ' . $validated['nombre'];
+        $nombreCompleto = $negocio->nombre . ' - ' . $validated['nombre'];
 
         // Verificar si ya existe una sucursal con ese nombre
         if (Sucursal::where('nombre', $nombreCompleto)
-            ->where('negocio_id', auth()->user()->negocio()->first()->id)
+            ->where('negocio_id', $negocio->id)
             ->exists()) {
             return redirect()->back()
-                ->withInput() // Mantiene los datos del formulario
+                ->withInput()
                 ->with('error', 'Ya existe una sucursal con ese nombre en tu negocio.');
         }
 
-        $sucursal = new Sucursal();
-        $sucursal->nombre = $nombreCompleto;
-        $sucursal->direccion_completa = $validated['direccion_completa'];
-        $sucursal->telefono = $validated['telefono'];
-        $sucursal->horarios = $validated['horarios'];
-        $sucursal->codigo_postal = $validated['codigo_postal'];
-        $sucursal->activo = $validated['activo'];
-        $sucursal->negocio_id = auth()->user()->negocio()->first()->id;
-        $sucursal->latitud = $validated['latitud'];
-        $sucursal->longitud = $validated['longitud'];
-        $sucursal->save();
+        // Manejar la imagen
+        $imageUrl = null;
+        if ($request->hasFile('image_url')) {
+            $file = $request->file('image_url');
+            $path = $file->store('sucursales-image', 'public');
+            $imageUrl = asset('storage/' . $path);
+        }
+
+        // Crear la sucursal
+        $sucursal = Sucursal::create([
+            'nombre' => $nombreCompleto,
+            'direccion_completa' => $validated['direccion_completa'],
+            'telefono' => $validated['telefono'],
+            'horarios' => $validated['horarios'],
+            'codigo_postal' => $validated['codigo_postal'],
+            'activo' => $validated['activo'],
+            'negocio_id' => $negocio->id,
+            'latitud' => $validated['latitud'],
+            'longitud' => $validated['longitud'],
+            'image_url' => $imageUrl,
+        ]);
 
         return redirect()->back()
             ->with('success', 'Sucursal creada exitosamente.');
@@ -128,6 +142,7 @@ class SucursalController extends Controller
                 'activo',
                 'latitud',
                 'longitud',
+                'image_url'
             ]),
         ]);
     }
@@ -135,25 +150,28 @@ class SucursalController extends Controller
     //update
     public function update(Request $request, string|int $id)
     {
-        $sucursal = Sucursal::find($id);
-        // Verificar que la sucursal pertenezca al negocio del usuario
+        $sucursal = Sucursal::findOrFail($id);
+        
+        // Obtener el negocio una sola vez
         $negocio = auth()->user()->negocio()->first();
         
+        // Verificar que la sucursal pertenezca al negocio del usuario
         if ($sucursal->negocio_id !== $negocio->id) {
-            return redirect()->back()->with(['warning' => 'No tienes permiso para actualizar esta sucursal.']);
-            
+            return redirect()->back()
+                ->with('warning', 'No tienes permiso para actualizar esta sucursal.');
         }
 
         // Validar los datos
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'direccion_completa' => 'required|string|max:500',
-            'telefono' => 'required|string|max:10',
+            'telefono' => 'required|string|max:20',
             'horarios' => 'required|array',
             'codigo_postal' => 'required|string|max:5',
             'activo' => 'required|boolean',
             'latitud' => 'required|numeric',
             'longitud' => 'required|numeric',
+            'image_url' => 'nullable|file|image|max:2048'
         ]);
 
         // Modificar el nombre para incluir el del negocio
@@ -169,15 +187,36 @@ class SucursalController extends Controller
                 ->with('error', 'Ya existe otra sucursal con ese nombre en tu negocio.');
         }
 
-        $sucursal->nombre = $nombreCompleto;
-        $sucursal->direccion_completa = $validated['direccion_completa'];
-        $sucursal->telefono = $validated['telefono'];
-        $sucursal->horarios = $validated['horarios'];
-        $sucursal->codigo_postal = $validated['codigo_postal'];
-        $sucursal->activo = $validated['activo'];
-        $sucursal->latitud = $validated['latitud'];
-        $sucursal->longitud = $validated['longitud'];
-        $sucursal->save();
+        // Manejar la imagen si se subió una nueva
+        $imageUrl = $sucursal->image_url; // Mantener la imagen actual por defecto
+        
+        if ($request->hasFile('image_url')) {
+            // Eliminar la imagen anterior si existe
+            if ($sucursal->image_url) {
+                $oldPath = str_replace(asset('storage/'), '', $sucursal->image_url);
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+
+            // Guardar la nueva imagen
+            $file = $request->file('image_url');
+            $path = $file->store('sucursales-image', 'public');
+            $imageUrl = asset('storage/' . $path);
+        }
+
+        // Actualizar la sucursal usando fill o update
+        $sucursal->update([
+            'nombre' => $nombreCompleto,
+            'direccion_completa' => $validated['direccion_completa'],
+            'telefono' => $validated['telefono'],
+            'horarios' => $validated['horarios'],
+            'codigo_postal' => $validated['codigo_postal'],
+            'activo' => $validated['activo'],
+            'latitud' => $validated['latitud'],
+            'longitud' => $validated['longitud'],
+            'image_url' => $imageUrl,
+        ]);
 
         return redirect()->back()
             ->with('success', 'Sucursal actualizada exitosamente.');

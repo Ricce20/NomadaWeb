@@ -25,6 +25,7 @@ class Sucursal extends Model
         'latitud',
         'longitud',
         'negocio_id',
+        'image_url'
     ];
 
     protected $casts = [

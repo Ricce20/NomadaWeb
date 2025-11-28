@@ -3,7 +3,7 @@ import AppLayoutOwnership from "@/layouts/app-layout-ownership";
 import { create, edit, index, store, update } from "@/routes/sucursales";
 import { BreadcrumbItem, SucursalItem, Horarios, HorarioDia } from "@/types";
 import { Head, Link, useForm } from "@inertiajs/react";
-import { ArrowLeftCircle, Check, Home, Map, MapPin, Phone } from "lucide-react";
+import { ArrowLeftCircle, Check, Home, Map, MapPin, Phone, ImageIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ interface SucursalFormProps {
 }
 
 export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
+    console.log(sucursal);
+    
     // Breadcrumbs dinámicos
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -61,6 +63,9 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
         direccion: sucursal?.direccion_completa || ''
     });
 
+    // Estado para preview de imagen
+    const [preview, setPreview] = useState<string | null>(sucursal?.image_url || null);
+
     const { data, setData, post, put, processing, errors, reset } = useForm({
         nombre: nombreLimpio || '',
         telefono: sucursal?.telefono || '',
@@ -69,7 +74,9 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
         latitud: sucursal?.latitud || null,
         longitud: sucursal?.longitud || null,
         activo: sucursal?.activo ?? true,
-        horarios: horariosIniciales
+        horarios: horariosIniciales,
+        image_url: null as File | null,
+        ...(isEdit && { _method: 'PUT' })
     });
 
     // Actualizar datos del formulario cuando cambian las coordenadas
@@ -107,14 +114,21 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
         }
 
         if (isEdit && sucursal) {
-            put(update(sucursal.id).url, {
+            // Cuando hay archivos, usar post con _method
+            post(update(sucursal.id).url, {
+                method:'put',
+                forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
                     // Opcional: mostrar notificación de éxito
+                },
+                onError: (errors) => {
+                    console.log('Errores:', errors);
                 }
             });
         } else {
             post(store().url, {
+                forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
                     reset();
@@ -123,6 +137,10 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                         longitud: null,
                         direccion: ''
                     });
+                    setPreview(null);
+                },
+                onError: (errors) => {
+                    console.log('Errores:', errors);
                 }
             });
         }
@@ -148,6 +166,21 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
             longitud: data.coordenadas[1],
             direccion: data.direccion
         });
+    };
+
+    // Manejar selección de imagen
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('image_url', file);
+            
+            // Crear preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     return (
@@ -263,6 +296,60 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                             </div>
                         </div>
 
+                        {/* Input de Imagen */}
+                        <div className="mt-6 space-y-3">
+                            <Label htmlFor="image_url" className="flex items-center gap-2 text-foreground">
+                                <ImageIcon className="w-5 h-5" />
+                                Imagen de la Sucursal
+                            </Label>
+                            
+                            {/* Preview de imagen actual o nueva */}
+                            {preview && (
+                                <div className="mb-3">
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                        {data.image_url ? 'Nueva imagen seleccionada:' : 'Imagen actual:'}
+                                    </p>
+                                    <div className="relative inline-block">
+                                        <img 
+                                            src={preview} 
+                                            alt="Preview de la sucursal" 
+                                            className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-300 shadow-sm"
+                                        />
+                                        {data.image_url && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setData('image_url', null);
+                                                    setPreview(sucursal?.image_url || null);
+                                                }}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
+                                                title="Cancelar nueva imagen"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <Input
+                                id="image_url"
+                                name="image_url"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="w-full"
+                            />
+                            
+                            <p className="text-xs text-muted-foreground">
+                                Formatos permitidos: JPG, PNG, WEBP. Tamaño máximo: 2MB
+                            </p>
+                            
+                            <InputError message={errors.image_url} />
+                        </div>
+
                         {/* Información de coordenadas */}
                         {(data.latitud && data.longitud) && (
                             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -306,7 +393,6 @@ export default function SucursalForm({ isEdit, sucursal }: SucursalFormProps) {
                                 <SelectorUbicacionSucursal 
                                     onUbicacionSeleccionada={handleUbicacionSucursal}
                                     ubicacionInicial={
-                                        // Convertir a números y validar que existan ambas coordenadas
                                         (data.latitud && data.longitud)
                                             ? [Number(data.latitud), Number(data.longitud)] as [number, number]
                                             : null

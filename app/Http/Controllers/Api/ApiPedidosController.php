@@ -57,12 +57,8 @@ class ApiPedidosController extends Controller
             'productos.*.precio_unitario' => 'required|numeric|min:0',
             'subtotal' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0',
-            'monto_adelanto' => 'nullable|numeric|min:0',
-            'pago_completo' => 'required|boolean',
-            'saldo_pendiente' => 'nullable|numeric|min:0',
             'notas_pago' => 'nullable|string|max:1000',
             'metodo_pago_adelanto' => 'nullable|string|in:efectivo,tarjeta,transferencia,otro',
-            'estado_pago' => 'required|string|in:pendiente,adelanto,pagado'
         ]);
 
         if ($validator->fails()) {
@@ -77,7 +73,7 @@ class ApiPedidosController extends Controller
 
         // Cargar datos necesarios en una sola consulta
         $user = User::find($validated['user_id']);
-        if (!$user) {
+        if (!$user || $user->type != 'client') {
             return response()->json([
                 'success' => false,
                 'message' => 'Usuario no encontrado'
@@ -130,13 +126,13 @@ class ApiPedidosController extends Controller
         }
 
         // Preparar datos para transacción
-        $montoAdelanto = $validated['monto_adelanto'] ?? 0;
-        $pagoCompleto = (bool)$validated['pago_completo'];
+        $montoAdelanto = 0;
+        $pagoCompleto = false;
         $requiereEnvio = (bool)$validated['requiere_envio'];
         
         $estadoPedido = 'pendiente';
         $estadoMovimiento = 'pendiente';
-        $notaEstado = 'Pedido pendiente - Esperando confirmación de pago';
+        $notaEstado = $validate['notas_pago'];
 
         DB::beginTransaction();
         
@@ -153,12 +149,12 @@ class ApiPedidosController extends Controller
             // Crear pedido
             $pedido = Pedido::create([
                 'folio' => $folio,
-                'user_id' => $validated['user_id'],
-                'created_by' => auth()->id() ?? null,
-                'sucursal_id' => $validated['sucursal_id'],
+                'user_id' => $user->id,
+                'created_by' => $user->id,
+                'sucursal_id' => $sucursal->id,
                 'direccion_entrega' => $validated['direccion_entrega'],
-                'latitud' => $validated['latitud'] ?? null,
-                'longitud' => $validated['longitud'] ?? null,
+                'latitud' => $validated['latitud'],
+                'longitud' => $validated['longitud'],
                 'requiere_envio' => $requiereEnvio,
                 'distancia_km' => $validated['distancia_km'] ?? null,
                 'duracion_minutos' => $validated['duracion_minutos'] ?? null,
@@ -169,7 +165,7 @@ class ApiPedidosController extends Controller
                 'pago_completo' => $pagoCompleto,
                 'saldo_pendiente' => $validated['total'] - $montoAdelanto,
                 'notas_pago' => $validated['notas_pago'] ?? null,
-                'estado_pago' => $validated['estado_pago'],
+                'estado_pago' => 'pendiente',
                 'estado' => $estadoPedido,
                 'fecha_pedido' => now(),
             ]);
@@ -377,8 +373,8 @@ class ApiPedidosController extends Controller
     {
         $pedido = Pedido::with([
             'user:id,name,phone',
-            'detalles.productBaseBranch.productBase:id,name,sku_base,descripcion',
-            'estadoHistorial',
+            'detalles.productBaseBranch.productBase:id,name,sku_base,description',
+            'statusHistories',
             'estadoViaje.conductor:id,name,phone',
 
         ])->find($id);
@@ -411,7 +407,7 @@ class ApiPedidosController extends Controller
         $pedidos = Pedido::with([
             'user:id,name,phone',
             'detalles.productBaseBranch.productBase:id,name,sku_base',
-            'estadoHistorial',
+            'statusHistories',
             'estadoViaje.conductor:id,name,phone',
         ])->where('user_id', $userId)
           ->orderBy('created_at', 'desc')
@@ -424,7 +420,32 @@ class ApiPedidosController extends Controller
             ]
         ], 200);
     }     
+    // pedidos de los clientes
+    public function pedidosActivosClienteUser(string | int $userId){
+        $user = User::find($userId);
+        if(!$user){
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
+        $pedidos = Pedido::with([
+            'user:id,name,phone',
+            'detalles.productBaseBranch.productBase:id,name,sku_base',
+            'statusHistories',
+            'estadoViaje.conductor:id,name,phone',
+        ])->whereIn('estado',['en_ruta','pendiente','confirmado'])
+        ->where('user_id',$user->id)
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pedidos_activos' => $pedidos
+            ]
+        ]);
+    }
     //PARA EL USUARIO CONDUCTOR O REPARTIDOR ----------------------------------------------------------
 
     public function pedidosAsignadosActivos($conductorId): JsonResponse
@@ -603,5 +624,6 @@ class ApiPedidosController extends Controller
         ], 200);
     }
 
+    
 
 }

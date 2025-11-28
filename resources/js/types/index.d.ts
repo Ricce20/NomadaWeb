@@ -93,6 +93,7 @@ export interface SucursalItem {
   updated_at: Date; // Laravel envía fechas como string ISO
   latitud: number | null;
   longitud: number | null;
+  image_url:string | null;
 }
 
 
