@@ -84,7 +84,7 @@ class ProductBaseBranch extends Model
      */
     public function recalculateStockFromWarehouses(): void
     {
-        $total = $this->warehouseProducts()->where('activo',true)->sum('stock');
+        $total = $this->warehouseProducts()->sum('stock');
         $this->stock = $total;
         $this->save();
     }
