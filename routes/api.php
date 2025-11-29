@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/api/pedidos/activos/conductor/{id}',[ApiPedidosController::class,'pedidosAsignadosActivos'])->name('api.pedidos-activos-conductor');
     Route::get('/api/pedidos/historial/conductor/{id}',[ApiPedidosController::class,'historialPedidosConductor'])->name('api.pedido-historial-conductor');
     Route::get('/api/pedido-viaje/{id}/detalle',[ApiPedidosController::class,'detallesPedidoViaje'])->name('api.pedido-viaje-detalle');
+    Route::put('/api/pedido-viaje/{id}/actualizar-estado',[ApiPedidosController::class,'actualizarEstadoViajePedido'])->name('api.pedido-viaje-actualizar-estado');
     //para el cliente user
     Route::get('/api/pedidos/{id}/show',[ApiPedidosController::class,'show'])->name('api.pedido-cliente.show');
     Route::get('/api/pedidos/cliente-user/{id}',[ApiPedidosController::class,'pedidosPorUsuario'])->name('api.pedidos-cliente-usuario');

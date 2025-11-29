@@ -590,36 +590,69 @@ class ApiPedidosController extends Controller
             ], 404);
         }
 
-        $pedido = $viajePedido->pedido;
+        $pedido = Pedido::find($viajePedido->pedido_id);
+        if(!$pedido){
+            return response()->json([
+                'success' => false,
+                'message' => 'Pedido no encontrado'
+            ]);
+        }
+        $estadoAnterior = $pedido->estado;
+        $notas = 'no se agregaron notas';
 
         $viajePedido->estado = $validator->validated()['estado_viaje'];
         // Actualizar fechas según el estado
         if ($viajePedido->estado === 'en_ruta') {
             $viajePedido->fecha_salida = now();
             $pedido->estado = 'en_ruta';
+            $notas = 'El pedido esta en camino';
         } elseif ($viajePedido->estado === 'entregado') {
             $viajePedido->fecha_entrega = now();
             $pedido->estado = 'entregado';
-            $pedido->estado_pago = $validator->validated()['estado_pago'] ?? $pedido->estado_pago;
-            $pedido->monto_adelantado += $validator->validated()['monto_recibido'] ?? $pedido->monto_adelanto;
+            $pedido->estado_pago = 'pagado';
+            $pedido->pago_completo = true;
+            $pedido->monto_adelanto += $validator->validated()['monto_recibido'] ?? $pedido->monto_adelanto;
             $pedido->saldo_pendiente = max(0, $pedido->total - $pedido->monto_adelanto);
+            
             $pedido->fecha_entrega = now();
+            $notas = 'El pedido ha sido entregado por el conductor repartidor';
+            $saldo = floatval($pedido->saldo_pendiente);
+            if($saldo > 0){
+                $pedido->estado = 'pendiente';            
+                $pedido->estado_pago = 'pendiente';
+                $pedido->pago_completo = false;
+                $viajePedido->estado = 'asignado';
+                $notas = 'El pedido fue entregado pero el cliente falta por pagar un monto restante';
+            }
         }
         if($viajePedido->estado === 'cancelado'){
             $pedido->estado = 'cancelado';
             $pedido->motivo_cancelacion = $validator->validated()['motivo_cancelacion'] ?? 'Sin motivo especificado';
             $pedido->fecha_cancelacion = now();
+            $notas = 'El pedido se ha cancelado';
+
 
         }
         $viajePedido->save();
         $pedido->save();
-
+        PedidoEstadoHistorial::create([
+                'pedido_id' => $pedido->id,
+                'estado_anterior' => $estadoAnterior,
+                'estado_nuevo' => $pedido->estado,
+                'notas' => $notas,
+        ]);
+        $viajePedido->load([
+            'pedido.user:id,name,phone',
+            'pedido.cliente:id,nombre,apellidos,telefono,activo',
+            'pedido.detalles.productBaseBranch.productBase:id,name,sku_base,description',
+            'pedido.statusHistories',
+            'vehiculo:id,marca,modelo,placa',
+        ]);
         return response()->json([
             'success' => true,
             'message' => 'Estado del viaje pedido actualizado exitosamente',
             'data' => [
                 'viaje_pedido' => $viajePedido,
-                'pedido' => $pedido,
             ]
         ], 200);
     }

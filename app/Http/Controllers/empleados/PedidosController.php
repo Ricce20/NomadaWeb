@@ -149,7 +149,7 @@ class PedidosController extends Controller
         } else {
             $estadoPedido = 'pendiente';
             $estadoMovimiento = 'pendiente';
-            $notaEstado = 'Pedido pendiente - Esperando confirmación de pago';
+            $notaEstado = 'Pedido pendiente - Esperando confirmación del pedido';
         }
 
         // Iniciar transacción
