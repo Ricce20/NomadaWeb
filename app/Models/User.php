@@ -108,8 +108,8 @@ class User extends Authenticatable
             self::TYPE_SUPER_ADMIN => 'management',
             self::TYPE_OWNER => 'ownership',
             //comparten layout pero diferente seccion
-            self::TYPE_MANAGER => 'orders.index',
-            self::TYPE_WAREHOUSEMAN => $this->getWarehousemanDashboard(),
+            self::TYPE_MANAGER => 'dashboard',
+            self::TYPE_WAREHOUSEMAN => 'dashboard',
             //no tienen dashboard, van al login
             default => 'login',
         };

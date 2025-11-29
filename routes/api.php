@@ -14,6 +14,7 @@ Route::middleware('auth:sanctum')->group(function () {
     })->middleware('auth:sanctum');
 
     Route::post('/api/logout',[ApiAuthController::class,'logout'])->name('api.auth.logout');
+    Route::get('/api/validate-token',[ApiAuthController::class,'validateToken'])->name('api.auth.validar-token');
     
     Route::get('/api/negocios-with-sucursales',[ApiNegocioController::class,'getAllWithSucursales'])->name('api.negocios-sucursales.all');
     Route::get('/api/only-negocios',[ApiNegocioController::class,'getAllOnlyNegocios'])->name('api.only-negocios.all');
