@@ -17,6 +17,9 @@ import {
     ArrowRight,
     ExternalLink
 } from 'lucide-react';
+import { LineChart } from '@/components/charts/line-chart';
+import { DoughnutChart } from '@/components/charts/doughnut-chart';
+import { BarChart } from '@/components/charts/bar-chart';
 
 interface DashboardMetrics {
     kpis: {
@@ -101,7 +104,37 @@ const getEstadoBadgeVariant = (estado: string) => {
 };
 
 export default function OwnerDashboard({ negocio, metrics, filters }: DashboardProps) {
-    const { kpis, orders_by_status, top_products, top_branches, recent_orders } = metrics;
+    const { kpis, orders_by_status, top_products, top_branches, recent_orders, revenue_timeseries } = metrics;
+
+    // Preparar datos para gráfico de ingresos
+    const revenueLabels = revenue_timeseries.map(item => {
+        const date = new Date(item.date);
+        return date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
+    });
+    const revenueData = revenue_timeseries.map(item => item.revenue);
+
+    // Preparar datos para gráfico de pedidos por estado
+    const statusLabels = ['Pendientes', 'Confirmados', 'En Preparación', 'En Ruta', 'Entregados', 'Cancelados'];
+    const statusData = [
+        orders_by_status.pendiente,
+        orders_by_status.confirmado,
+        orders_by_status.en_preparacion,
+        orders_by_status.en_ruta,
+        orders_by_status.entregado,
+        orders_by_status.cancelado,
+    ];
+    const statusColors = [
+        'rgb(156, 163, 175)', // gray - pendiente
+        'rgb(59, 130, 246)',  // blue - confirmado
+        'rgb(245, 158, 11)',  // amber - en preparación
+        'rgb(139, 92, 246)',  // purple - en ruta
+        'rgb(16, 185, 129)',  // green - entregado
+        'rgb(239, 68, 68)',   // red - cancelado
+    ];
+
+    // Preparar datos para gráfico de top productos
+    const topProductsLabels = top_products.slice(0, 5).map(p => p.name);
+    const topProductsData = top_products.slice(0, 5).map(p => p.qty_sold);
 
     return (
         <AppLayoutOwner breadcrumbs={breadcrumbs}>
@@ -156,41 +189,76 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                     />
                 </div>
 
-                {/* Orders by Status */}
+                {/* Revenue Timeseries Chart */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Pedidos por Estado</CardTitle>
-                        <CardDescription>Distribución de pedidos en el período</CardDescription>
+                        <CardTitle>Ingresos en el Tiempo</CardTitle>
+                        <CardDescription>Evolución de ingresos en el período seleccionado</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold">{orders_by_status.pendiente}</div>
-                                <div className="text-sm text-muted-foreground">Pendientes</div>
-                            </div>
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold">{orders_by_status.confirmado}</div>
-                                <div className="text-sm text-muted-foreground">Confirmados</div>
-                            </div>
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold">{orders_by_status.en_preparacion}</div>
-                                <div className="text-sm text-muted-foreground">En Preparación</div>
-                            </div>
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold">{orders_by_status.en_ruta}</div>
-                                <div className="text-sm text-muted-foreground">En Ruta</div>
-                            </div>
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold text-green-600">{orders_by_status.entregado}</div>
-                                <div className="text-sm text-muted-foreground">Entregados</div>
-                            </div>
-                            <div className="text-center p-4 rounded-lg border">
-                                <div className="text-2xl font-bold text-red-600">{orders_by_status.cancelado}</div>
-                                <div className="text-sm text-muted-foreground">Cancelados</div>
-                            </div>
+                        <div className="h-[300px]">
+                            {revenueData.length > 0 ? (
+                                <LineChart
+                                    labels={revenueLabels}
+                                    data={revenueData}
+                                    label="Ingresos"
+                                />
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    No hay datos de ingresos
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    {/* Orders by Status Chart */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Pedidos por Estado</CardTitle>
+                            <CardDescription>Distribución de pedidos en el período</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-[300px]">
+                                {statusData.some(val => val > 0) ? (
+                                    <DoughnutChart
+                                        labels={statusLabels}
+                                        data={statusData}
+                                        colors={statusColors}
+                                    />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                        No hay pedidos en el período
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Products Chart */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top 5 Productos</CardTitle>
+                            <CardDescription>Productos más vendidos por cantidad</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-[300px]">
+                                {topProductsData.length > 0 ? (
+                                    <BarChart
+                                        labels={topProductsLabels}
+                                        data={topProductsData}
+                                        label="Unidades vendidas"
+                                    />
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                        No hay datos de productos
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                     {/* Top Products */}
