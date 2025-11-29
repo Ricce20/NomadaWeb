@@ -345,6 +345,24 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
         }
     };
 
+    // Función central para determinar la habilitación de los botones
+    const canPerformAction = (estado: string, action: 'confirm' | 'cancel' | 'complete'): boolean => {
+    const estadoLower = estado.toLowerCase();
+    switch (action) {
+        case 'confirm':
+            // Solo se puede CONFIRMAR si está PENDIENTE.
+            return estadoLower === 'pendiente';
+        case 'cancel':
+            // Se puede CANCELAR si no está ya ENTREGADO o CANCELADO.
+            return !['entregado', 'cancelado'].includes(estadoLower);
+        case 'complete':
+            // Se puede COMPLETAR (Entregar) si está listo para envío ('en_preparacion' o 'en_ruta').
+            return ['en_preparacion', 'en_ruta'].includes(estadoLower);
+        default:
+            return false;
+        }
+    };
+
     // Helpers para formatos de fecha
     const toInputDateTime = (iso?: string | null) => {
         if (!iso) return '';
@@ -1291,6 +1309,7 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
                             )}
 
                             {/* Sección de Acciones del Pedido */}
+                   
                             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <Package className="w-5 h-5 text-purple-600" />
@@ -1298,13 +1317,47 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
                                 </h2>
 
                                 <div className="space-y-3">
-                                    {/* Botón Completar Pedido - Solo si está pendiente o confirmado */}
-                                    {['pendiente', 'confirmado', 'en_preparacion', 'listo_para_envio'].includes(pedido.estado) && (
+                                    {/* Botón Confirmar Pedido */}
+                                    {/* Solo se muestra si NO está entregado/cancelado */}
+                                    {!['entregado', 'cancelado'].includes(pedido.estado) && (
+                                        <button
+                                            onClick={handleConfirmarPedido}
+                                            // Deshabilitar: 1. Si se está procesando. 2. Si el estado NO permite confirmación.
+                                            disabled={isConfirmingOrder || !canPerformAction(pedido.estado, 'confirm')}
+                                            className={`w-full px-4 py-3 rounded-lg text-white font-semibold transition-colors flex items-center justify-center gap-2 ${
+                                                isConfirmingOrder || !canPerformAction(pedido.estado, 'confirm')
+                                                    ? 'bg-blue-400 cursor-not-allowed'
+                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                            }`}
+                                        >
+                                            {isConfirmingOrder ? (
+                                                <>
+                                                    <RefreshCw className="w-5 h-5 animate-spin" />
+                                                    Confirmando...
+                                                </>
+                                            ) : pedido.estado.toLowerCase() === 'confirmado' ? (
+                                                <>
+                                                    <CheckCircle2 className="w-5 h-5" />
+                                                    Confirmado
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="w-5 h-5" />
+                                                    Confirmar Pedido
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Botón Completar Pedido (Entregar) */}
+                                    {/* Solo se muestra si NO está entregado/cancelado */}
+                                    {!['entregado', 'cancelado'].includes(pedido.estado) && (
                                         <button
                                             onClick={handleCompletarPedido}
-                                            disabled={isCompletingOrder}
+                                            // Deshabilitar: 1. Si se está procesando. 2. Si el estado NO permite completarse.
+                                            disabled={isCompletingOrder || !canPerformAction(pedido.estado, 'complete')}
                                             className={`w-full px-4 py-3 rounded-lg text-white font-semibold transition-colors flex items-center justify-center gap-2 ${
-                                                isCompletingOrder
+                                                isCompletingOrder || !canPerformAction(pedido.estado, 'complete')
                                                     ? 'bg-green-400 cursor-not-allowed'
                                                     : 'bg-green-600 hover:bg-green-700'
                                             }`}
@@ -1323,13 +1376,15 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
                                         </button>
                                     )}
 
-                                    {/* Botón Cancelar Pedido - Disponible en estados activos */}
-                                    {['pendiente', 'confirmado', 'en_preparacion', 'listo_para_envio', 'en_camino'].includes(pedido.estado) && (
+                                    {/* Botón Cancelar Pedido */}
+                                    {/* Solo se muestra si NO está entregado/cancelado */}
+                                    {!['entregado', 'cancelado'].includes(pedido.estado) && (
                                         <button
                                             onClick={() => setShowCancelModal(true)}
-                                            disabled={isCancellingOrder}
+                                            // Deshabilitar: 1. Si se está procesando. 2. Si el estado NO permite cancelación.
+                                            disabled={isCancellingOrder || !canPerformAction(pedido.estado, 'cancel')}
                                             className={`w-full px-4 py-3 rounded-lg text-white font-semibold transition-colors flex items-center justify-center gap-2 ${
-                                                isCancellingOrder
+                                                isCancellingOrder || !canPerformAction(pedido.estado, 'cancel')
                                                     ? 'bg-red-400 cursor-not-allowed'
                                                     : 'bg-red-600 hover:bg-red-700'
                                             }`}
@@ -1347,43 +1402,12 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
                                             )}
                                         </button>
                                     )}
-
-                                    {/* Botón Confirmar Pedido - realiza PUT a la ruta 'pedido.confirmar' */}
-                                    {!['entregado', 'cancelado'].includes(pedido.estado) && (
-                                        <button
-                                            onClick={handleConfirmarPedido}
-                                            // Deshabilitar si ya está confirmadoo mientras se procesa
-                                            disabled={isConfirmingOrder || pedido.estado === 'confirmado'}
-                                            className={`w-full px-4 py-3 rounded-lg text-white font-semibold transition-colors flex items-center justify-center gap-2 ${
-                                                isConfirmingOrder || pedido.estado === 'confirmado'
-                                                    ? 'bg-blue-400 cursor-not-allowed'
-                                                    : 'bg-blue-600 hover:bg-blue-700'
-                                            }`}
-                                        >
-                                            {isConfirmingOrder ? (
-                                                <>
-                                                    <RefreshCw className="w-5 h-5 animate-spin" />
-                                                    Confirmando...
-                                                </>
-                                            ) : pedido.estado === 'confirmado' ? (
-                                                <>
-                                                    <CheckCircle2 className="w-5 h-5" />
-                                                    Confirmado
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <CheckCircle2 className="w-5 h-5" />
-                                                    Confirmar Pedido
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
-
+                                    
                                     {/* Mensaje si el pedido ya está completado o cancelado */}
                                     {['entregado', 'cancelado'].includes(pedido.estado) && (
                                         <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
                                             <p className="text-sm text-gray-600 text-center">
-                                                Este pedido ya ha sido {pedido.estado === 'entregado' ? 'completado' : 'cancelado'}
+                                               Este pedido ya ha sido **<strong>{pedido.estado === 'entregado' ? 'completado' : 'cancelado'}</strong> **
                                             </p>
                                         </div>
                                     )}
