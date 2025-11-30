@@ -160,7 +160,8 @@ class InventoryMovementController extends Controller
                 default => 'Movimiento'
             };
             
-            return redirect()->back()->with('success', "{$typeLabel} de inventario registrado correctamente.");
+            return redirect()->route('sucursal.inventario.ver-movimientos-inventario')
+                ->with('success', "{$typeLabel} de inventario registrado correctamente.");
                 
         } catch (\Exception $e) {
             return back()

@@ -250,12 +250,11 @@ export default function MovimientosInventarioCreate({ sucursal, warehouses }: Cr
     }
 
     post(inventario.generar.store().url, {
+      preserveState: false,
+      preserveScroll: false,
       onError: (errors) => {
         console.log("Errores de validación:", errors);
       },
-      onSuccess: () => {
-        console.log("Movimiento registrado con éxito");
-      }
     });
   };
 
