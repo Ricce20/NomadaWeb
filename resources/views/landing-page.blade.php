@@ -41,6 +41,9 @@
             </nav>
             
             <div class="flex items-center space-x-4">
+                <button onclick="openGame()" class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors flex items-center">
+                    <i class="fas fa-gamepad mr-2"></i>Jugar
+                </button>
                 <a href="login"  class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors">Iniciar Sesión</a>
                 <a href="register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors">Registrate</a>
             </div>
@@ -449,6 +452,48 @@
                     });
                 }
             });
+        });
+    </script>
+
+    <!-- Modal del Juego Unity -->
+    <div id="gameModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center">
+        <div class="relative w-full max-w-6xl mx-4 flex flex-col" style="height: 90vh;">
+            <button onclick="closeGame()" class="absolute top-4 right-4 z-10 text-white text-3xl hover:text-[#FC6F20] transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <iframe id="gameFrame" class="w-full flex-1 rounded-t-lg" style="border: none;"></iframe>
+            <!-- Botón de descarga debajo del juego -->
+            <div class="bg-[#323232] p-4 rounded-b-lg flex items-center justify-center">
+                <a href="/ejecutable nomada2d.zip" download class="px-6 py-3 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors font-medium flex items-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Descargar Juego para Windows
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            frame.src = '/Nomada/index.html';
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            frame.src = '';
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeGame();
+            }
         });
     </script>
 </body>
