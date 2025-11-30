@@ -287,7 +287,7 @@ class ManagerDashboardController extends Controller
         return WarehouseProduct::whereHas('warehouse', function ($q) use ($branchId) {
             $q->where('sucursal_id', $branchId);
         })
-        ->with(['productBase:id,name', 'warehouse:id,nombre'])
+        ->with(['productBaseBranch.productBase:id,name', 'warehouse:id,nombre'])
         ->where('stock', '<', 10)
         ->where('stock', '>', 0)
         ->orderBy('stock')
