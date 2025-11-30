@@ -1,6 +1,6 @@
 // components/flash-messages.tsx
 import { usePage } from '@inertiajs/react';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import { SharedData } from '@/types';
@@ -14,68 +14,53 @@ interface Toast {
 export function FlashMessages() {
     const { flash } = usePage<SharedData>().props;
     const [toasts, setToasts] = useState<Toast[]>([]);
-    const previousFlashRef = useRef(flash);
+    const lastFlashRef = useRef<string>('');
 
-    //Declarar removeToast ANTES de usarlo en useEffect
     const removeToast = useCallback((id: number) => {
         setToasts(prev => prev.filter(toast => toast.id !== id));
     }, []);
 
     useEffect(() => {
-        const newToasts: Toast[] = [];
+        // Crear una key única para este conjunto de flash messages
+        const flashKey = JSON.stringify({
+            success: flash.success || null,
+            error: flash.error || null,
+            warning: flash.warning || null,
+            info: flash.info || null,
+        });
 
-        // Solo procesar si los flash messages han cambiado
-        const hasFlashChanged = 
-            flash.success !== previousFlashRef.current.success ||
-            flash.error !== previousFlashRef.current.error ||
-            flash.warning !== previousFlashRef.current.warning ||
-            flash.info !== previousFlashRef.current.info;
-
-        if (hasFlashChanged) {
-            if (flash.success) {
-                newToasts.push({
-                    id: Date.now() + 1,
-                    message: flash.success,
-                    type: 'success'
-                });
-            }
-            if (flash.error) {
-                newToasts.push({
-                    id: Date.now() + 2,
-                    message: flash.error,
-                    type: 'error'
-                });
-            }
-            if (flash.warning) {
-                newToasts.push({
-                    id: Date.now() + 3,
-                    message: flash.warning,
-                    type: 'warning'
-                });
-            }
-            if (flash.info) {
-                newToasts.push({
-                    id: Date.now() + 4,
-                    message: flash.info,
-                    type: 'info'
-                });
-            }
-
-            if (newToasts.length > 0) {
-                setToasts(prev => [...prev, ...newToasts]);
-
-                // Auto-remover después de 5 segundos
-                newToasts.forEach(toast => {
-                    setTimeout(() => {
-                        removeToast(toast.id);
-                    }, 5000);
-                });
-            }
-
-            // Actualizar la referencia
-            previousFlashRef.current = { ...flash };
+        // Si es el mismo flash que ya procesamos, no hacer nada
+        if (flashKey === lastFlashRef.current || flashKey === '{"success":null,"error":null,"warning":null,"info":null}') {
+            return;
         }
-    }, [flash, removeToast]); // Agregar removeToast a las dependencias
+
+        lastFlashRef.current = flashKey;
+
+        const newToasts: Toast[] = [];
+        const timestamp = Date.now();
+
+        if (flash.success) {
+            newToasts.push({ id: timestamp + 1, message: flash.success, type: 'success' });
+        }
+        if (flash.error) {
+            newToasts.push({ id: timestamp + 2, message: flash.error, type: 'error' });
+        }
+        if (flash.warning) {
+            newToasts.push({ id: timestamp + 3, message: flash.warning, type: 'warning' });
+        }
+        if (flash.info) {
+            newToasts.push({ id: timestamp + 4, message: flash.info, type: 'info' });
+        }
+
+        if (newToasts.length > 0) {
+            setToasts(prev => [...prev, ...newToasts]);
+
+            // Auto-remover después de 5 segundos
+            newToasts.forEach(toast => {
+                setTimeout(() => removeToast(toast.id), 5000);
+            });
+        }
+    }, [flash.success, flash.error, flash.warning, flash.info, removeToast]);
 
     const getAlertConfig = (type: Toast['type']) => {
         switch (type) {
@@ -127,7 +112,7 @@ export function FlashMessages() {
                             {toast.type === 'warning' && 'Advertencia'}
                             {toast.type === 'info' && 'Información'}
                         </AlertTitle>
-                        <AlertDescription className="text-sm text-foreground">
+                        <AlertDescription className="text-sm">
                             {toast.message}
                         </AlertDescription>
                         <button

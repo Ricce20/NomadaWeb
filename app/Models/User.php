@@ -116,23 +116,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Obtener dashboard para warehouse_man
-     */
-    private function getWarehousemanDashboard(): string
-    {
-        // Obtener primera sucursal asignada
-        $sucursal = $this->sucursales()->first();
-        
-        if ($sucursal) {
-            // Redirigir al dashboard de inventario de su sucursal
-            return "/sucursales/{$sucursal->id}/inventario";
-        }
-        
-        // Si no tiene sucursal, ir a ownership
-        return 'ownership';
-    }
-
-    /**
      * Helpers rápidos
      */
     public function isSuperAdmin(): bool { return $this->type === self::TYPE_SUPER_ADMIN; }

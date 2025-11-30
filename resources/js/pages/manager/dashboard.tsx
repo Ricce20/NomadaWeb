@@ -2,20 +2,19 @@ import { KpiCard } from '@/components/kpi-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import AppLayoutOwner from '@/layouts/app-layout-ownership';
-import { ownership } from '@/routes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { dashboard } from '@/routes';
 import { 
     DollarSign, 
     ShoppingCart, 
     TrendingUp, 
     Package, 
     AlertTriangle, 
-    Building2,
-    ArrowRight,
-    ExternalLink
+    Clock,
+    CheckCircle
 } from 'lucide-react';
 import { LineChart } from '@/components/charts/line-chart';
 import { DoughnutChart } from '@/components/charts/doughnut-chart';
@@ -25,10 +24,11 @@ interface DashboardMetrics {
     kpis: {
         total_revenue: number;
         total_orders: number;
+        delivered_orders: number;
+        pending_orders: number;
         avg_order_value: number;
         total_stock: number;
-        stock_critical: number;
-        total_branches: number;
+        low_stock_count: number;
     };
     orders_by_status: {
         pendiente: number;
@@ -44,12 +44,6 @@ interface DashboardMetrics {
         qty_sold: number;
         revenue: number;
     }>;
-    top_branches: Array<{
-        branch_id: number;
-        name: string;
-        revenue: number;
-        orders_count: number;
-    }>;
     revenue_timeseries: Array<{
         date: string;
         revenue: number;
@@ -59,28 +53,38 @@ interface DashboardMetrics {
         folio: string;
         total: number;
         estado: string;
-        branch_name: string;
+        cliente_name: string;
         created_at: string;
+    }>;
+    low_stock_products: Array<{
+        product_id: number;
+        name: string;
+        warehouse: string;
+        stock: number;
     }>;
 }
 
+interface Branch {
+    id: number;
+    nombre: string;
+}
+
 interface DashboardProps {
-    negocio: {
-        id: number;
-        nombre: string;
-    };
-    metrics: DashboardMetrics;
+    branches: Branch[];
+    selectedBranch: Branch | null;
+    metrics: DashboardMetrics | null;
     filters: {
         from: string;
         to: string;
-        branch_id?: number;
+        branch_id: number | null;
     };
+    error?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
-        href: ownership().url,
+        href: dashboard().url,
     },
 ];
 
@@ -103,8 +107,33 @@ const getEstadoBadgeVariant = (estado: string) => {
     }
 };
 
-export default function OwnerDashboard({ negocio, metrics, filters }: DashboardProps) {
-    const { kpis, orders_by_status, top_products, top_branches, recent_orders, revenue_timeseries } = metrics;
+export default function ManagerDashboard({ branches, selectedBranch, metrics, filters, error }: DashboardProps) {
+    const handleBranchChange = (branchId: string) => {
+        router.get(dashboard().url, {
+            branch_id: branchId,
+            from: filters.from,
+            to: filters.to,
+        }, { preserveState: true });
+    };
+
+    if (error || !metrics || !selectedBranch) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Dashboard Manager" />
+                <div className="flex items-center justify-center h-96">
+                    <div className="text-center">
+                        <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold mb-2">Sin sucursales asignadas</h2>
+                        <p className="text-muted-foreground">
+                            {error || 'Contacta al administrador para que te asigne una sucursal.'}
+                        </p>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
+    const { kpis, orders_by_status, top_products, recent_orders, revenue_timeseries, low_stock_products } = metrics;
 
     // Preparar datos para gráfico de ingresos
     const revenueLabels = revenue_timeseries.map(item => {
@@ -124,12 +153,12 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
         orders_by_status.cancelado,
     ];
     const statusColors = [
-        'rgb(156, 163, 175)', // gray - pendiente
-        'rgb(59, 130, 246)',  // blue - confirmado
-        'rgb(245, 158, 11)',  // amber - en preparación
-        'rgb(139, 92, 246)',  // purple - en ruta
-        'rgb(16, 185, 129)',  // green - entregado
-        'rgb(239, 68, 68)',   // red - cancelado
+        'rgb(156, 163, 175)',
+        'rgb(59, 130, 246)',
+        'rgb(245, 158, 11)',
+        'rgb(139, 92, 246)',
+        'rgb(16, 185, 129)',
+        'rgb(239, 68, 68)',
     ];
 
     // Preparar datos para gráfico de top productos
@@ -137,55 +166,81 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
     const topProductsData = top_products.slice(0, 5).map(p => p.qty_sold);
 
     return (
-        <AppLayoutOwner breadcrumbs={breadcrumbs}>
-            <Head title={`Dashboard - ${negocio.nombre}`} />
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Dashboard - ${selectedBranch.nombre}`} />
             
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Ejecutivo</h1>
-                    <p className="text-muted-foreground">
-                        Resumen de operaciones de {negocio.nombre}
-                    </p>
+                {/* Header con selector de sucursal */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Dashboard de Sucursal</h1>
+                        <p className="text-muted-foreground">
+                            Gestión y métricas de {selectedBranch.nombre}
+                        </p>
+                    </div>
+                    
+                    {branches.length > 1 && (
+                        <Select value={String(selectedBranch.id)} onValueChange={handleBranchChange}>
+                            <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Seleccionar sucursal" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {branches.map((branch) => (
+                                    <SelectItem key={branch.id} value={String(branch.id)}>
+                                        {branch.nombre}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 {/* KPIs */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <KpiCard
-                        title="Ingresos Totales"
+                        title="Ingresos del Período"
                         value={`$${kpis.total_revenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
                         icon={DollarSign}
-                        description="Últimos 30 días"
+                        description="Pedidos entregados"
                     />
                     <KpiCard
-                        title="Total de Pedidos"
+                        title="Pedidos Totales"
                         value={kpis.total_orders}
                         icon={ShoppingCart}
-                        description="Últimos 30 días"
+                        description="En el período"
                     />
+                    <KpiCard
+                        title="Pedidos Pendientes"
+                        value={kpis.pending_orders}
+                        icon={Clock}
+                        description="Por procesar"
+                    />
+                    <KpiCard
+                        title="Pedidos Entregados"
+                        value={kpis.delivered_orders}
+                        icon={CheckCircle}
+                        description="Completados"
+                    />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <KpiCard
                         title="Ticket Promedio"
                         value={`$${kpis.avg_order_value.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
                         icon={TrendingUp}
-                        description="Por pedido"
+                        description="Por pedido entregado"
                     />
                     <KpiCard
                         title="Stock Total"
                         value={kpis.total_stock.toLocaleString()}
                         icon={Package}
-                        description="En todos los almacenes"
+                        description="Unidades en almacén"
                     />
                     <KpiCard
-                        title="Stock Crítico"
-                        value={kpis.stock_critical}
+                        title="Stock Bajo"
+                        value={kpis.low_stock_count}
                         icon={AlertTriangle}
-                        description="Productos bajo mínimo"
-                    />
-                    <KpiCard
-                        title="Sucursales"
-                        value={kpis.total_branches}
-                        icon={Building2}
-                        description="Activas"
+                        description="Productos < 10 unidades"
                     />
                 </div>
 
@@ -193,7 +248,7 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                 <Card>
                     <CardHeader>
                         <CardTitle>Ingresos en el Tiempo</CardTitle>
-                        <CardDescription>Evolución de ingresos en el período seleccionado</CardDescription>
+                        <CardDescription>Evolución de ventas en el período</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px]">
@@ -217,7 +272,7 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                     <Card>
                         <CardHeader>
                             <CardTitle>Pedidos por Estado</CardTitle>
-                            <CardDescription>Distribución de pedidos en el período</CardDescription>
+                            <CardDescription>Distribución actual</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[300px]">
@@ -240,7 +295,7 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                     <Card>
                         <CardHeader>
                             <CardTitle>Top 5 Productos</CardTitle>
-                            <CardDescription>Productos más vendidos por cantidad</CardDescription>
+                            <CardDescription>Más vendidos por cantidad</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[300px]">
@@ -261,7 +316,48 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                    {/* Top Products */}
+                    {/* Low Stock Products */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                                Productos con Stock Bajo
+                            </CardTitle>
+                            <CardDescription>Menos de 10 unidades</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {low_stock_products.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Producto</TableHead>
+                                            <TableHead>Almacén</TableHead>
+                                            <TableHead className="text-right">Stock</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {low_stock_products.map((product) => (
+                                            <TableRow key={`${product.product_id}-${product.warehouse}`}>
+                                                <TableCell className="font-medium">{product.name}</TableCell>
+                                                <TableCell>{product.warehouse}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant={product.stock < 5 ? 'destructive' : 'outline'}>
+                                                        {product.stock}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    No hay productos con stock bajo
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Products Table */}
                     <Card>
                         <CardHeader>
                             <CardTitle>Productos Más Vendidos</CardTitle>
@@ -296,59 +392,13 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                             )}
                         </CardContent>
                     </Card>
-
-                    {/* Top Branches */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Sucursales Top</CardTitle>
-                            <CardDescription>Por ingresos generados</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {top_branches.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Sucursal</TableHead>
-                                            <TableHead className="text-right">Pedidos</TableHead>
-                                            <TableHead className="text-right">Ingresos</TableHead>
-                                            <TableHead className="text-right">Acción</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {top_branches.map((branch) => (
-                                            <TableRow key={branch.branch_id}>
-                                                <TableCell className="font-medium">{branch.name}</TableCell>
-                                                <TableCell className="text-right">{branch.orders_count}</TableCell>
-                                                <TableCell className="text-right">
-                                                    ${branch.revenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={`/sucursales/${branch.branch_id}`}>
-                                                            <ExternalLink className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                    No hay datos de sucursales
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
 
                 {/* Recent Orders */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Pedidos Recientes</CardTitle>
-                            <CardDescription>Últimos 5 pedidos registrados</CardDescription>
-                        </div>
+                    <CardHeader>
+                        <CardTitle>Pedidos Recientes</CardTitle>
+                        <CardDescription>Últimos 10 pedidos</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {recent_orders.length > 0 ? (
@@ -356,7 +406,7 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Folio</TableHead>
-                                        <TableHead>Sucursal</TableHead>
+                                        <TableHead>Cliente</TableHead>
                                         <TableHead className="text-right">Total</TableHead>
                                         <TableHead>Estado</TableHead>
                                         <TableHead>Fecha</TableHead>
@@ -368,7 +418,7 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                                             <TableCell className="font-mono font-medium">
                                                 #{order.folio}
                                             </TableCell>
-                                            <TableCell>{order.branch_name}</TableCell>
+                                            <TableCell>{order.cliente_name}</TableCell>
                                             <TableCell className="text-right">
                                                 ${order.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                             </TableCell>
@@ -392,6 +442,6 @@ export default function OwnerDashboard({ negocio, metrics, filters }: DashboardP
                     </CardContent>
                 </Card>
             </div>
-        </AppLayoutOwner>
+        </AppLayout>
     );
 }
