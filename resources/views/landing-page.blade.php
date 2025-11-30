@@ -456,7 +456,7 @@
     </script>
 
     <!-- Modal del Juego Unity -->
-    <div id="gameModal" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex items-center justify-center">
+    <div id="gameModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center">
         <div class="relative w-full h-full max-w-6xl max-h-[90vh] mx-4">
             <button onclick="closeGame()" class="absolute top-4 right-4 z-10 text-white text-3xl hover:text-[#FC6F20] transition-colors">
                 <i class="fas fa-times"></i>
