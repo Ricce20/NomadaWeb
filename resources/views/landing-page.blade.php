@@ -41,6 +41,9 @@
             </nav>
             
             <div class="flex items-center space-x-4">
+                <button onclick="openGame()" class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors flex items-center">
+                    <i class="fas fa-gamepad mr-2"></i>Jugar
+                </button>
                 <a href="login"  class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors">Iniciar Sesión</a>
                 <a href="register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors">Registrate</a>
             </div>
@@ -449,6 +452,41 @@
                     });
                 }
             });
+        });
+    </script>
+
+    <!-- Modal del Juego Unity -->
+    <div id="gameModal" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex items-center justify-center">
+        <div class="relative w-full h-full max-w-6xl max-h-[90vh] mx-4">
+            <button onclick="closeGame()" class="absolute top-4 right-4 z-10 text-white text-3xl hover:text-[#FC6F20] transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <iframe id="gameFrame" class="w-full h-full rounded-lg" style="border: none;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function openGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            frame.src = '/Nomada/index.html';
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            frame.src = '';
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeGame();
+            }
         });
     </script>
 </body>

@@ -12,6 +12,7 @@ import { BreadcrumbItem, SucursalItem } from "@/types";
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import { ArrowLeft, Save, Search, X, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import { useState, useCallback, useRef, useEffect } from "react";
+import { BarcodeScanner } from "@/components/barcode-scanner";
 
 interface WarehouseOption {
   id: number;
@@ -181,6 +182,38 @@ export default function MovimientosInventarioCreate({ sucursal, warehouses }: Cr
     setShowResults(false);
     setSearchResults([]);
     setCurrentSearchIndex(null);
+  };
+
+  // Buscar producto por código de barras
+  const handleBarcodeScan = async (barcode: string, index: number) => {
+    try {
+      const params = new URLSearchParams({
+        barcode: barcode,
+        sucursal_id: sucursal.id.toString(),
+      });
+      
+      if (data.almacen_id) {
+        params.append('warehouse_id', data.almacen_id);
+      }
+
+      const response = await fetch(`/sucursal/barcode/search?${params.toString()}`, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        handleProductSelect(result.data, index);
+      } else {
+        alert(result.message || 'Producto no encontrado');
+      }
+    } catch (error) {
+      console.error('Error buscando por código de barras:', error);
+      alert('Error al buscar el producto');
+    }
   };
 
   // Limpiar selección de producto
@@ -476,6 +509,15 @@ export default function MovimientosInventarioCreate({ sucursal, warehouses }: Cr
                       ) : (
                         // Búsqueda de producto
                         <div className="relative">
+                          <div className="flex gap-2 mb-2">
+                            <BarcodeScanner 
+                              onScan={(barcode) => handleBarcodeScan(barcode, index)}
+                              disabled={!data.almacen_id}
+                            />
+                            <span className="text-sm text-muted-foreground self-center">
+                              o busca manualmente:
+                            </span>
+                          </div>
                           <div className="relative">
                             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input

@@ -5,9 +5,14 @@ use App\Http\Controllers\Api\ProductSearchController;
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Api\ApiNegocioController;
 use App\Http\Controllers\Api\ApiPedidosController;
+use App\Http\Controllers\Api\BarcodeController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/product-bases/search', [ProductSearchController::class, 'search']);
+    
+    // Códigos de barras
+    Route::get('/barcode/search', [BarcodeController::class, 'search']);
+    Route::post('/barcode', [BarcodeController::class, 'store']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
