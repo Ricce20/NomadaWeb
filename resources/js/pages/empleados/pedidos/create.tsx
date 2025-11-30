@@ -317,7 +317,12 @@ export default function PedidosLocales({ cliente, sucursal, vehiculos }: PedidoP
     const totalCarrito = cart.reduce((sum, item) => sum + item.subtotal, 0);
     const costoEnvioAplicable = (requiereEnvio && datosRuta && incluirCostoEnvio) ? datosRuta.costoEnvio : 0;
     const totalFinal = totalCarrito + costoEnvioAplicable;
-    const adelantoNumerico = parseFloat(montoAdelanto) || 0;
+    let adelantoNumerico:number = 0.0;
+    if(!pagoCompleto){
+        adelantoNumerico = parseFloat(montoAdelanto) || 0;
+    }else{
+        adelantoNumerico = totalFinal;
+    }
     const saldoPendiente = totalFinal - adelantoNumerico;
 
     // Verificar si puede continuar a productos

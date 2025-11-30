@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiAuthController extends Controller
 {
@@ -78,6 +79,82 @@ class ApiAuthController extends Controller
             'token'   => $token,
             'user'    => $user
         ], 200);
+    }
+
+    /**
+     * Validar si un token de Sanctum es válido
+     * 
+     */
+    public function validateToken(Request $request)
+    {
+        try {
+            // Obtener el token del header Authorization
+            $token = $request->bearerToken();
+
+            if (!$token) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Token no proporcionado',
+                    'user' => null
+                ], 401);
+            }
+
+            // Buscar el token en la base de datos
+            $accessToken = PersonalAccessToken::findToken($token);
+
+            if (!$accessToken) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Token inválido o no encontrado',
+                    'user' => null
+                ], 401);
+            }
+
+            // Verificar si el token ha expirado
+            if ($accessToken->expires_at && $accessToken->expires_at->isPast()) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Token expirado',
+                    'user' => null
+                ], 401);
+            }
+
+            // Obtener el usuario asociado al token
+            $user = $accessToken->tokenable;
+
+            if (!$user) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Usuario no encontrado',
+                    'user' => null
+                ], 401);
+            }
+
+            // Token válido - devolver información del usuario
+            return response()->json([
+                'valid' => true,
+                'message' => 'Token válido',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'user_type' => $user->user_type, // 'client' o 'driver'
+                    // Agrega más campos según necesites
+                ],
+                'token' => [
+                    'name' => $accessToken->name,
+                    'expires_at' => $accessToken->expires_at,
+                    'last_used_at' => $accessToken->last_used_at,
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Error al validar token: ' . $e->getMessage(),
+                'user' => null
+            ], 500);
+        }
     }
 
     //register

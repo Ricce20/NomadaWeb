@@ -57,12 +57,8 @@ class ApiPedidosController extends Controller
             'productos.*.precio_unitario' => 'required|numeric|min:0',
             'subtotal' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0',
-            'monto_adelanto' => 'nullable|numeric|min:0',
-            'pago_completo' => 'required|boolean',
-            'saldo_pendiente' => 'nullable|numeric|min:0',
             'notas_pago' => 'nullable|string|max:1000',
             'metodo_pago_adelanto' => 'nullable|string|in:efectivo,tarjeta,transferencia,otro',
-            'estado_pago' => 'required|string|in:pendiente,adelanto,pagado'
         ]);
 
         if ($validator->fails()) {
@@ -77,7 +73,7 @@ class ApiPedidosController extends Controller
 
         // Cargar datos necesarios en una sola consulta
         $user = User::find($validated['user_id']);
-        if (!$user) {
+        if (!$user || $user->type != 'client') {
             return response()->json([
                 'success' => false,
                 'message' => 'Usuario no encontrado'
@@ -130,13 +126,13 @@ class ApiPedidosController extends Controller
         }
 
         // Preparar datos para transacción
-        $montoAdelanto = $validated['monto_adelanto'] ?? 0;
-        $pagoCompleto = (bool)$validated['pago_completo'];
+        $montoAdelanto = 0;
+        $pagoCompleto = false;
         $requiereEnvio = (bool)$validated['requiere_envio'];
         
         $estadoPedido = 'pendiente';
         $estadoMovimiento = 'pendiente';
-        $notaEstado = 'Pedido pendiente - Esperando confirmación de pago';
+        $notaEstado = $validate['notas_pago'];
 
         DB::beginTransaction();
         
@@ -153,12 +149,12 @@ class ApiPedidosController extends Controller
             // Crear pedido
             $pedido = Pedido::create([
                 'folio' => $folio,
-                'user_id' => $validated['user_id'],
-                'created_by' => auth()->id() ?? null,
-                'sucursal_id' => $validated['sucursal_id'],
+                'user_id' => $user->id,
+                'created_by' => $user->id,
+                'sucursal_id' => $sucursal->id,
                 'direccion_entrega' => $validated['direccion_entrega'],
-                'latitud' => $validated['latitud'] ?? null,
-                'longitud' => $validated['longitud'] ?? null,
+                'latitud' => $validated['latitud'],
+                'longitud' => $validated['longitud'],
                 'requiere_envio' => $requiereEnvio,
                 'distancia_km' => $validated['distancia_km'] ?? null,
                 'duracion_minutos' => $validated['duracion_minutos'] ?? null,
@@ -169,7 +165,7 @@ class ApiPedidosController extends Controller
                 'pago_completo' => $pagoCompleto,
                 'saldo_pendiente' => $validated['total'] - $montoAdelanto,
                 'notas_pago' => $validated['notas_pago'] ?? null,
-                'estado_pago' => $validated['estado_pago'],
+                'estado_pago' => 'pendiente',
                 'estado' => $estadoPedido,
                 'fecha_pedido' => now(),
             ]);
@@ -377,8 +373,8 @@ class ApiPedidosController extends Controller
     {
         $pedido = Pedido::with([
             'user:id,name,phone',
-            'detalles.productBaseBranch.productBase:id,name,sku_base,descripcion',
-            'estadoHistorial',
+            'detalles.productBaseBranch.productBase:id,name,sku_base,description',
+            'statusHistories',
             'estadoViaje.conductor:id,name,phone',
 
         ])->find($id);
@@ -411,7 +407,7 @@ class ApiPedidosController extends Controller
         $pedidos = Pedido::with([
             'user:id,name,phone',
             'detalles.productBaseBranch.productBase:id,name,sku_base',
-            'estadoHistorial',
+            'statusHistories',
             'estadoViaje.conductor:id,name,phone',
         ])->where('user_id', $userId)
           ->orderBy('created_at', 'desc')
@@ -424,7 +420,32 @@ class ApiPedidosController extends Controller
             ]
         ], 200);
     }     
+    // pedidos de los clientes
+    public function pedidosActivosClienteUser(string | int $userId){
+        $user = User::find($userId);
+        if(!$user){
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
+        $pedidos = Pedido::with([
+            'user:id,name,phone',
+            'detalles.productBaseBranch.productBase:id,name,sku_base',
+            'statusHistories',
+            'estadoViaje.conductor:id,name,phone',
+        ])->whereIn('estado',['en_ruta','pendiente','confirmado'])
+        ->where('user_id',$user->id)
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pedidos_activos' => $pedidos
+            ]
+        ]);
+    }
     //PARA EL USUARIO CONDUCTOR O REPARTIDOR ----------------------------------------------------------
 
     public function pedidosAsignadosActivos($conductorId): JsonResponse
@@ -569,39 +590,73 @@ class ApiPedidosController extends Controller
             ], 404);
         }
 
-        $pedido = $viajePedido->pedido;
+        $pedido = Pedido::find($viajePedido->pedido_id);
+        if(!$pedido){
+            return response()->json([
+                'success' => false,
+                'message' => 'Pedido no encontrado'
+            ]);
+        }
+        $estadoAnterior = $pedido->estado;
+        $notas = 'no se agregaron notas';
 
         $viajePedido->estado = $validator->validated()['estado_viaje'];
         // Actualizar fechas según el estado
         if ($viajePedido->estado === 'en_ruta') {
             $viajePedido->fecha_salida = now();
             $pedido->estado = 'en_ruta';
+            $notas = 'El pedido esta en camino';
         } elseif ($viajePedido->estado === 'entregado') {
             $viajePedido->fecha_entrega = now();
             $pedido->estado = 'entregado';
-            $pedido->estado_pago = $validator->validated()['estado_pago'] ?? $pedido->estado_pago;
-            $pedido->monto_adelantado += $validator->validated()['monto_recibido'] ?? $pedido->monto_adelanto;
+            $pedido->estado_pago = 'pagado';
+            $pedido->pago_completo = true;
+            $pedido->monto_adelanto += $validator->validated()['monto_recibido'] ?? $pedido->monto_adelanto;
             $pedido->saldo_pendiente = max(0, $pedido->total - $pedido->monto_adelanto);
+            
             $pedido->fecha_entrega = now();
+            $notas = 'El pedido ha sido entregado por el conductor repartidor';
+            $saldo = floatval($pedido->saldo_pendiente);
+            if($saldo > 0){
+                $pedido->estado = 'pendiente';            
+                $pedido->estado_pago = 'pendiente';
+                $pedido->pago_completo = false;
+                $viajePedido->estado = 'asignado';
+                $notas = 'El pedido fue entregado pero el cliente falta por pagar un monto restante';
+            }
         }
         if($viajePedido->estado === 'cancelado'){
             $pedido->estado = 'cancelado';
             $pedido->motivo_cancelacion = $validator->validated()['motivo_cancelacion'] ?? 'Sin motivo especificado';
             $pedido->fecha_cancelacion = now();
+            $notas = 'El pedido se ha cancelado';
+
 
         }
         $viajePedido->save();
         $pedido->save();
-
+        PedidoEstadoHistorial::create([
+                'pedido_id' => $pedido->id,
+                'estado_anterior' => $estadoAnterior,
+                'estado_nuevo' => $pedido->estado,
+                'notas' => $notas,
+        ]);
+        $viajePedido->load([
+            'pedido.user:id,name,phone',
+            'pedido.cliente:id,nombre,apellidos,telefono,activo',
+            'pedido.detalles.productBaseBranch.productBase:id,name,sku_base,description',
+            'pedido.statusHistories',
+            'vehiculo:id,marca,modelo,placa',
+        ]);
         return response()->json([
             'success' => true,
             'message' => 'Estado del viaje pedido actualizado exitosamente',
             'data' => [
                 'viaje_pedido' => $viajePedido,
-                'pedido' => $pedido,
             ]
         ], 200);
     }
 
+    
 
 }

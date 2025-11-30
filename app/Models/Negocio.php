@@ -17,8 +17,16 @@ class Negocio extends Model
         'activo',
         'descripcion',
         'user_id',
+        'logo'
     ];
+    protected $appends = ['logo_url'];
 
+    public function getLogoUrlAttribute()
+    {
+        return $this->logo 
+            ? asset('storage/' . $this->logo) 
+            : null;
+    }
     protected $casts = [
         'activo' => 'boolean',
     ];
