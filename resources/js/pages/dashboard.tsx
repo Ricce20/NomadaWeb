@@ -47,14 +47,14 @@ export default function Dashboard() {
                                 </div>
                                 
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    {/* Tarjeta: Inventario por almacén */}
+                                    {/* Tarjeta: Gestión de Almacenes */}
                                     <Card className="hover:shadow-md transition-shadow">
                                         <CardHeader>
                                             <div className="flex items-center gap-2">
                                                 <div className="p-2 rounded-lg bg-primary/10">
                                                     <PackageSearch className="h-5 w-5 text-primary" />
                                                 </div>
-                                                <CardTitle>Inventario por Almacén</CardTitle>
+                                                <CardTitle>Gestión de Almacenes</CardTitle>
                                             </div>
                                             <CardDescription>
                                                 Consulta el inventario de los almacenes de tu sucursal
@@ -62,8 +62,8 @@ export default function Dashboard() {
                                         </CardHeader>
                                         <CardContent>
                                             <Button asChild className="w-full">
-                                                <Link href={`/sucursales/${primaryBranch.id}/inventario`}>
-                                                    Ver Inventario
+                                                <Link href="/sucursal/gestion/almacenes">
+                                                    Ver Almacenes
                                                     <ArrowRight className="ml-2 h-4 w-4" />
                                                 </Link>
                                             </Button>
@@ -85,7 +85,7 @@ export default function Dashboard() {
                                         </CardHeader>
                                         <CardContent>
                                             <Button asChild className="w-full">
-                                                <Link href={`/sucursales/${primaryBranch.id}/movimientos-inventario`}>
+                                                <Link href="/sucursal/inventario/movimientos">
                                                     Ver Movimientos
                                                     <ArrowRight className="ml-2 h-4 w-4" />
                                                 </Link>
