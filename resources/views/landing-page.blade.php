@@ -457,11 +457,18 @@
 
     <!-- Modal del Juego Unity -->
     <div id="gameModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center">
-        <div class="relative w-full h-full max-w-6xl max-h-[90vh] mx-4">
+        <div class="relative w-full max-w-6xl mx-4 flex flex-col" style="height: 90vh;">
             <button onclick="closeGame()" class="absolute top-4 right-4 z-10 text-white text-3xl hover:text-[#FC6F20] transition-colors">
                 <i class="fas fa-times"></i>
             </button>
-            <iframe id="gameFrame" class="w-full h-full rounded-lg" style="border: none;"></iframe>
+            <iframe id="gameFrame" class="w-full flex-1 rounded-t-lg" style="border: none;"></iframe>
+            <!-- Botón de descarga debajo del juego -->
+            <div class="bg-[#323232] p-4 rounded-b-lg flex items-center justify-center">
+                <a href="/ejecutable nomada2d.zip" download class="px-6 py-3 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors font-medium flex items-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Descargar Juego para Windows
+                </a>
+            </div>
         </div>
     </div>
 
