@@ -87,6 +87,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/pedidos/ver/historial',[PedidosController::class,'historial'])->name('pedido.historial');
         Route::put('/pedidos/edit/{pedido}/actualizar-asignacion',[PedidosController::class,'actualizarAsignacion'])->name('pedido.actualizar-asignacion');
         Route::put('/pedidos/{id}/confirmar',[PedidosController::class,'confirmarPedido'])->name('pedido.confirmar');
+        
+        // Búsqueda por código de barras
+        Route::get('/barcode/search', [\App\Http\Controllers\Api\BarcodeController::class, 'search'])->name('barcode.search');
     });
 
     // Productos por sucursal (Route Model Binding)
