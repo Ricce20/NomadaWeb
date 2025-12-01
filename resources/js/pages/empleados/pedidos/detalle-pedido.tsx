@@ -350,14 +350,14 @@ export default function DetallePedido({ pedido, vehiculos, sucursal, viaje, driv
     const estadoLower = estado.toLowerCase();
     switch (action) {
         case 'confirm':
-            // Solo se puede CONFIRMAR si está PENDIENTE.
-            return estadoLower === 'pendiente';
+            // Se puede CONFIRMAR si está CONFIRMADO o EN_RUTA
+            return ['pendiente'].includes(estadoLower);
         case 'cancel':
-            // Se puede CANCELAR si no está ya ENTREGADO o CANCELADO.
-            return !['entregado', 'cancelado'].includes(estadoLower);
+            // Se puede CANCELAR si está PENDIENTE o EN_RUTA
+            return ['pendiente', 'en_ruta','confirmado'].includes(estadoLower);
         case 'complete':
             // Se puede COMPLETAR (Entregar) si está listo para envío ('en_preparacion' o 'en_ruta').
-            return ['en_preparacion', 'en_ruta'].includes(estadoLower);
+            return ['confirmado', 'en_ruta'].includes(estadoLower);
         default:
             return false;
         }

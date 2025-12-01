@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\ApiNegocioController;
 use App\Http\Controllers\Api\ApiPedidosController;
 use App\Http\Controllers\Api\BarcodeController;
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/product-bases/search', [ProductSearchController::class, 'search']);
     
     // Códigos de barras
@@ -37,5 +37,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/api/pedidos/activos/cliente-usuario/{id}',[ApiPedidosController::class,'pedidosActivosClienteUser'])->name('api.pedidos-activos-cliente-usuario');
 });
     Route::post('/api/register',[ApiAuthController::class,'registerClient'])->name('api.auth.register-client');
-    Route::post('/api/login',[ApiAuthController::class,'login'])->name('api.auth.login');
-   
+    Route::post('/api/login',[ApiAuthController::class,'login'])->name('api.auth.login')->middleware(['throttle:api-login']); 
