@@ -6,6 +6,9 @@
     <title>Nómada - Gestor de Pedidos e Inventarios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @vite(['resources/css/app.css'])
+    
+    <!-- Prefetch de assets para carga más rápida del login -->
+    <link rel="modulepreload" href="{{ Vite::asset('resources/js/app.tsx') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
@@ -18,9 +21,9 @@
     <header class="bg-[#323232] py-4 px-6 sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center">
-                <div class="w-xs h-10 rounded-full  flex items-center justify-center mr-3 pt-3">
+                <div class="w-32 md:w-40 h-10 rounded-full flex items-center justify-center mr-3 pt-3">
                     <!-- <i class="fas fa-map-marker-alt text-white"></i> -->
-                    <svg  viewBox="0 0 957 216" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 957 216" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">
                         <path d="M450.366 100.505C446.798 94.5829 441.726 89.7092 435.665 86.3781C429.586 82.9086 422.578 81.1714 414.643 81.1665C407.299 81.0795 400.054 82.8737 393.6 86.3781C387.534 89.7083 382.457 94.5819 378.884 100.505C375.29 106.478 373.498 113.368 373.508 121.175V177.894C373.559 179.855 373.051 181.789 372.043 183.472C371.059 185.105 369.659 186.448 367.986 187.365C366.314 188.282 364.428 188.739 362.521 188.691C360.699 188.704 358.904 188.253 357.306 187.381C355.796 186.363 354.526 185.03 353.585 183.472C352.583 181.787 352.075 179.854 352.12 177.894V121.175C352.12 113.368 350.323 106.485 346.729 100.527C343.148 94.6016 338.071 89.722 332.006 86.3781C325.81 82.9086 318.729 81.1714 310.765 81.1665C303.355 81.0636 296.042 82.8577 289.523 86.3781C283.482 89.7176 278.429 94.5904 274.874 100.505C271.397 106.478 269.656 113.368 269.651 121.175V213.585H300.188V118.928C300.155 117.048 300.598 115.19 301.477 113.526C302.449 111.934 303.791 110.598 305.388 109.632C307.016 108.651 308.882 108.132 310.783 108.132C312.684 108.132 314.549 108.651 316.178 109.632C317.775 110.598 319.117 111.934 320.089 113.526C321.075 115.154 321.582 117.026 321.554 118.928V175.655C321.554 183.833 323.351 190.909 326.945 196.881C330.593 202.759 335.73 207.569 341.836 210.825C348.258 214.193 355.415 215.915 362.667 215.839C369.867 215.93 376.974 214.206 383.33 210.825C389.435 207.567 394.571 202.757 398.221 196.881C401.942 190.923 403.803 183.848 403.803 175.655V118.738C403.751 116.892 404.262 115.075 405.268 113.526C406.235 111.934 407.571 110.598 409.165 109.632C410.804 108.661 412.672 108.143 414.577 108.132C416.481 108.109 418.351 108.63 419.968 109.632C421.539 110.57 422.825 111.916 423.689 113.526C424.689 115.078 425.2 116.893 425.154 118.738V213.585H455.793V121.175C455.793 113.368 453.984 106.478 450.366 100.505Z" fill="#FC6F20"/>
                         <path d="M269.651 133.428C268.824 129.55 267.652 125.753 266.15 122.083C262.953 114.005 258.143 106.663 252.013 100.505C245.89 94.1996 238.456 89.3147 230.237 86.195C221.799 82.7207 212.428 80.9811 202.125 80.9762C192.388 80.8507 182.719 82.6234 173.661 86.195C165.468 89.37 158.043 94.2475 151.877 100.505C145.872 106.664 141.125 113.933 137.902 121.907C136.203 126.219 134.949 130.692 134.159 135.258C132.694 143.899 132.694 152.725 134.159 161.367C134.948 165.933 136.202 170.407 137.902 174.718C141.16 182.761 145.965 190.087 152.046 196.281C158.232 202.563 165.648 207.504 173.829 210.796C182.258 214.275 191.682 216.01 202.103 216C212.401 216 221.772 214.265 230.215 210.796C238.424 207.56 245.848 202.612 251.991 196.281C260.872 187.191 266.988 175.769 269.629 163.343C270.658 158.408 271.169 153.379 271.153 148.338C271.177 143.329 270.674 138.332 269.651 133.428ZM237.122 164.668C235.361 169.461 232.706 173.877 229.299 177.682C225.936 181.423 221.813 184.405 217.206 186.429C212.439 188.454 207.304 189.468 202.125 189.408C196.99 189.554 191.885 188.582 187.163 186.56C182.442 184.538 178.217 181.513 174.782 177.697C171.369 173.895 168.714 169.478 166.959 164.683C165.184 159.413 164.303 153.884 164.351 148.323C164.302 142.88 165.184 137.469 166.959 132.323C168.689 127.467 171.345 122.992 174.782 119.148C180.116 113.537 187.052 109.707 194.643 108.178C202.235 106.65 210.114 107.497 217.206 110.606C221.826 112.514 225.958 115.433 229.299 119.148C232.703 122.953 235.357 127.366 237.122 132.155C239.026 137.338 239.974 142.824 239.92 148.345C239.96 153.909 239.012 159.435 237.122 164.668Z" fill="#FC6F20"/>
                         <path d="M103.857 83.4063V178.063C103.863 180.022 103.345 181.948 102.355 183.64C101.377 185.268 99.9841 186.607 98.3191 187.521C96.6541 188.435 94.7763 188.892 92.8771 188.844C91.0549 188.858 89.2588 188.412 87.6545 187.549C86.1431 186.534 84.873 185.199 83.9336 183.64C82.9633 181.942 82.458 180.018 82.4687 178.063V121.175C82.4687 113.368 80.6692 106.485 77.0704 100.527C73.4929 94.6073 68.4173 89.7347 62.3551 86.4C56.1633 82.9305 49.0827 81.1933 41.1135 81.1885C33.7036 81.0833 26.3904 82.8775 19.8719 86.4C13.8109 89.7312 8.73919 94.6048 5.17123 100.527C1.72862 106.485 0.00488313 113.368 0 121.175V213.585H30.5293V118.928C30.499 117.047 30.945 115.189 31.8258 113.526C32.7961 111.932 34.1381 110.596 35.7372 109.632C37.3652 108.651 39.2305 108.132 41.1318 108.132C43.0331 108.132 44.8983 108.651 46.5264 109.632C48.1239 110.598 49.4654 111.934 50.4378 113.526C51.424 115.154 51.9317 117.026 51.9027 118.928V175.823C51.7891 183.072 53.6664 190.214 57.3303 196.471C60.8498 202.48 65.9258 207.428 72.0237 210.796C78.5441 214.092 85.7491 215.81 93.0565 215.81C100.364 215.81 107.569 214.092 114.089 210.796C120.187 207.426 125.265 202.478 128.79 196.471C132.431 190.206 134.295 183.067 134.181 175.823V83.4063H103.857Z" fill="#FC6F20"/>
@@ -40,7 +43,7 @@
                 <a href="#contacto" class="hover:text-[#FC6F20] transition-colors">Contacto</a>
             </nav>
             
-            <div class="flex items-center space-x-4">
+            <div class="hidden md:flex items-center space-x-4">
                 <button onclick="openGame()" class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors flex items-center">
                     <i class="fas fa-gamepad mr-2"></i>Jugar
                 </button>
@@ -48,11 +51,28 @@
                 <a href="register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors">Registrate</a>
             </div>
             
-            <button class="md:hidden text-xl">
+            <button id="mobileMenuBtn" class="md:hidden text-xl">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
     </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-[#323232] px-6 py-4 border-t border-gray-700">
+        <nav class="flex flex-col space-y-4 mb-4">
+            <a href="#caracteristicas" class="hover:text-[#FC6F20] transition-colors">Características</a>
+            <a href="#planes" class="hover:text-[#FC6F20] transition-colors">Planes</a>
+            <a href="#testimonios" class="hover:text-[#FC6F20] transition-colors">Testimonios</a>
+            <a href="#contacto" class="hover:text-[#FC6F20] transition-colors">Contacto</a>
+        </nav>
+        <div class="flex flex-col space-y-2">
+            <button onclick="openGame()" class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors flex items-center justify-center">
+                <i class="fas fa-gamepad mr-2"></i>Jugar
+            </button>
+            <a href="login" class="px-4 py-2 rounded-md hover:bg-[#1B1B1B] transition-colors text-center">Iniciar Sesión</a>
+            <a href="register" class="px-4 py-2 bg-[#FC6F20] text-white rounded-md hover:bg-orange-600 transition-colors text-center">Registrate</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="py-16 px-6 bg-gradient-to-b from-[#323232] to-[#1B1B1B]">
@@ -436,6 +456,26 @@
     </footer>
 
     <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-times');
+        });
+
+        // Close mobile menu when clicking a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenuBtn.querySelector('i').classList.add('fa-bars');
+                mobileMenuBtn.querySelector('i').classList.remove('fa-times');
+            });
+        });
+
         // Smooth scroll para los enlaces internos
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -456,8 +496,8 @@
     </script>
 
     <!-- Modal del Juego Unity -->
-    <div id="gameModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center">
-        <div class="relative w-full max-w-6xl mx-4 flex flex-col" style="height: 90vh;">
+    <div id="gameModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center p-2 md:p-4">
+        <div class="relative w-full max-w-6xl flex flex-col" style="height: 95vh; max-height: 95vh;">
             <button onclick="closeGame()" class="absolute top-4 right-4 z-10 text-white text-3xl hover:text-[#FC6F20] transition-colors">
                 <i class="fas fa-times"></i>
             </button>

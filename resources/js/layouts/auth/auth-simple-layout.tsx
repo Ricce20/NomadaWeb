@@ -23,10 +23,7 @@ export default function AuthSimpleLayout({
                         href="/"
                         className="flex items-center gap-3 font-medium text-card-foreground hover:text-primary transition-colors"
                     >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                            <AppLogoIcon className="size-8 fill-current text-primary" />
-                        </div>
-                        <span className="text-lg font-semibold">Nomada</span>
+                        <AppLogoIcon className="h-8 w-auto fill-current text-primary" />
                     </a>
                     
                     <nav className="flex items-center gap-6">
@@ -46,8 +43,8 @@ export default function AuthSimpleLayout({
                     <div className="flex flex-col gap-8 border border-border bg-card p-8 rounded-xl shadow-lg">
                         <div className="flex flex-col items-center gap-4">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                                    <AppLogoIcon className="size-8 fill-current text-primary" />
+                                <div className="mb-2 flex h-16 w-40 items-center justify-center rounded-lg bg-primary/10 p-3">
+                                    <AppLogoIcon className="h-full w-auto fill-current text-primary" />
                                 </div>
                                 <span className="sr-only">{title}</span>
                             </div>
