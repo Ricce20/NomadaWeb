@@ -409,6 +409,8 @@ class ApiPedidosController extends Controller
             'detalles.productBaseBranch.productBase:id,name,sku_base',
             'statusHistories',
             'estadoViaje.conductor:id,name,phone',
+            'sucursal.negocio:id,nombre,logo'
+
         ])->where('user_id', $userId)
           ->orderBy('created_at', 'desc')
           ->get();
@@ -435,6 +437,7 @@ class ApiPedidosController extends Controller
             'detalles.productBaseBranch.productBase:id,name,sku_base',
             'statusHistories',
             'estadoViaje.conductor:id,name,phone',
+            'sucursal.negocio:id,nombre,logo'
         ])->whereIn('estado',['en_ruta','pendiente','confirmado'])
         ->where('user_id',$user->id)
         ->get();

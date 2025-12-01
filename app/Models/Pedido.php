@@ -84,5 +84,8 @@ class Pedido extends Model
     {
         return $this->hasMany(ViajePedido::class);
     }
+    public function negocio(){
+        return $this->belongsTo(Negocio::class);
+    }
 
 }
