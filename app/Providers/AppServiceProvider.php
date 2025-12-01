@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Sucursal::class, SucursalPolicy::class);
 
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(25)->by($request->user()?->id ?: $request->ip())
+            return Limit::perMinute(50)->by($request->user()?->id ?: $request->ip())
             ->response(function (Request $request,array $headers) {
                         // Respuesta directa y limpia para la API
                         return response()->json(['message' => 'muchos intentos solicitados, espera para volver a intentar'],429);
