@@ -6,8 +6,8 @@ use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Api\ApiNegocioController;
 use App\Http\Controllers\Api\ApiPedidosController;
 use App\Http\Controllers\Api\BarcodeController;
-
-Route::middleware('auth:sanctum')->group(function () {
+use App\Http\Controllers\Api\ApiProfileClientController;
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/product-bases/search', [ProductSearchController::class, 'search']);
     
     // Códigos de barras
@@ -35,7 +35,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/api/pedidos/{id}/show',[ApiPedidosController::class,'show'])->name('api.pedido-cliente.show');
     Route::get('/api/pedidos/cliente-user/{id}',[ApiPedidosController::class,'pedidosPorUsuario'])->name('api.pedidos-cliente-usuario');
     Route::get('/api/pedidos/activos/cliente-usuario/{id}',[ApiPedidosController::class,'pedidosActivosClienteUser'])->name('api.pedidos-activos-cliente-usuario');
+
+    //user-cliente-profile
+    // Obtener perfil del usuario autenticado
+    Route::get('/api/profile', [ApiProfileClientController::class, 'getProfile'])->name('api.auth.profile');
+    
+    // Actualizar email
+    Route::put('/api/profile/email', [ApiProfileClientController::class, 'updateEmail'])->name('api.auth.update-email');
+    
+    // Actualizar teléfono
+    Route::put('/api/profile/phone', [ApiProfileClientController::class, 'updatePhone'])->name('api.auth.update-phone');
+    
+    // Cambiar contraseña
+    Route::put('/api/profile/password', [ApiProfileClientController::class, 'updatePassword'])->name('api.auth.update-password');
+    
 });
     Route::post('/api/register',[ApiAuthController::class,'registerClient'])->name('api.auth.register-client');
-    Route::post('/api/login',[ApiAuthController::class,'login'])->name('api.auth.login');
-   
+    Route::post('/api/login',[ApiAuthController::class,'login'])->name('api.auth.login')->middleware(['throttle:api-login']); 
