@@ -49,6 +49,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Cambiar contraseña
     Route::put('/api/profile/password', [ApiProfileClientController::class, 'updatePassword'])->name('api.auth.update-password');
     
+    // En routes/api.php o web.php
+    Route::post('/api/negocio/{negocioId}/sucursal/{sucursalId}/costo-envio', [ApiPedidosController::class, 'obtenerCostoEnvio'])->name('api.pedido.calcular-costo');
+
+     // Crear pedido individual desde app móvil
+    Route::post('/api/pedido/crear', [ApiPedidosController::class, 'crearPedidoIndividual'])->name('api.pedido.crear-individual');
+    
+    // Crear múltiples pedidos desde app móvil
+    Route::post('/api/pedidos/crear-multiples', [ApiPedidosController::class, 'crearPedidosMultiples'])->name('api.pedido.crear-multiple');
 });
     Route::post('/api/register',[ApiAuthController::class,'registerClient'])->name('api.auth.register-client');
     Route::post('/api/login',[ApiAuthController::class,'login'])->name('api.auth.login')->middleware(['throttle:api-login']); 
