@@ -11,8 +11,57 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use App\Models\Almacen;
 use App\Models\InventoryMovementDetail;
+use Illuminate\Support\Facades\Http;
 class InventoryService
 {
+    // URL base de tu servidor OSRM (puedes usar el público para pruebas o uno propio)
+    protected $baseUrl = 'http://router.project-osrm.org/route/v1/driving/';
+
+    /**
+     * Obtiene la distancia y el tiempo entre dos puntos.
+     * * @param float $startLat Latitud de origen (Negocio)
+     * @param float $startLon Longitud de origen (Negocio)
+     * @param float $endLat Latitud de destino (Cliente)
+     * @param float $endLon Longitud de destino (Cliente)
+     * @return array|null [distance_km, duration_minutes]
+     */
+    public function getRouteData(float $startLat, float $startLon, float $endLat, float $endLon): ?array
+    {
+        // Formato OSRM: lon,lat;lon,lat
+        $coordinates = "{$startLon},{$startLat};{$endLon},{$endLat}";
+        $url = $this->baseUrl . $coordinates;
+
+        try {
+            $response = Http::get($url, [
+                'steps' => 'false',
+                'geometries' => 'polyline',
+                'overview' => 'full'
+            ])->throw(); // Lanza excepción si hay error HTTP (4xx o 5xx)
+
+            $data = $response->json();
+
+            if (empty($data['routes'])) {
+                return null;
+            }
+
+            $route = $data['routes'][0];
+
+            // Distancia en metros -> convertir a KM
+            $distance_km = $route['distance'] / 1000; 
+            // Duración en segundos -> convertir a minutos
+            $duration_minutes = $route['duration'] / 60; 
+
+            return [
+                'distance_km' => $distance_km,
+                'duration_minutes' => $duration_minutes
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error("Error al consultar OSRM: " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function registerMovement(
         Almacen $warehouse,
         array $products, // Array de productos con sus cantidades y notas
