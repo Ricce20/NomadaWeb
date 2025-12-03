@@ -31,7 +31,7 @@ export default function Login({
 
     return (
         <AuthLayout
-            title="Inciaia sesión en tu cuenta"
+            title="Inicia sesión en tu cuenta"
             description="Introduce tus credenciales para acceder a tu cuenta."
         >
             <Head title="Log in" />

@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Package, ClipboardList, History, LucidePersonStanding, Warehouse } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Package, ClipboardList, History, LucidePersonStanding, Warehouse, FileText } from 'lucide-react';
 import AppLogo from './app-logo';
 import cliente from '@/routes/sucursal/cliente';
 import sucursal from '@/routes/sucursal';
@@ -60,6 +60,12 @@ const mainNavItems: NavItemWithRoles[] = [
         href: sucursal.pedido.historial(),
         icon: History,
         allowedRoles: ['manager'], // Solo manager
+    },
+    {
+        title: 'Reportes',
+        href: '/reportes/pedidos',
+        icon: FileText,
+        allowedRoles: ['owner', 'manager'], // Owner y manager
     }
 ];
 

@@ -13,7 +13,7 @@ import {
 import { ownership } from '@/routes';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, UserCheckIcon } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UserCheckIcon, FileText } from 'lucide-react';
 import AppLogo from './app-logo';
 import { index } from '@/routes/sucursales';
 import cliente from '@/routes/sucursal/cliente';
@@ -34,7 +34,11 @@ const mainNavItems: NavItem[] = [
         href: cliente.index().url,
         icon: UserCheckIcon,
     },
-   
+    {
+        title: 'Reportes',
+        href: '/reportes/pedidos',
+        icon: FileText,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

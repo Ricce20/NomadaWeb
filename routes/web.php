@@ -61,6 +61,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('ownership');
     })->name('ownership');
 
+    // Reportes
+    Route::prefix('reportes')
+        ->middleware('role:owner,manager')
+        ->group(function () {
+            Route::get('pedidos', [\App\Http\Controllers\Reports\PedidosReportController::class, 'index'])
+                ->name('reportes.pedidos');
+            Route::get('pedidos/pdf', [\App\Http\Controllers\Reports\PedidosReportController::class, 'generatePdf'])
+                ->name('reportes.pedidos.pdf');
+        });
+
     }); 
 
 require __DIR__.'/settings.php';

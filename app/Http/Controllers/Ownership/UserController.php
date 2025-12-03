@@ -103,7 +103,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
+            'username' => 'required|string|max:255',
             'password' => ['required', 'confirmed', Password::defaults()],
             'type' => 'required|in:manager,warehouse_man,driver',
             'sucursal_id'=> 'required|integer'
@@ -112,15 +112,13 @@ class UserController extends Controller
         $negocioId = $this->getNegocioId();
 
         if(!$negocioId){
-            return redirect()->back()->with(['error' => 'negocio no encontrado']);
+            return redirect()->back()->withErrors(['error' => 'Negocio no encontrado']);
         }
 
         $negocio = Negocio::find($negocioId);
         if(!$negocio){
-            return redirect()->back()->with(['error' => 'negocio no encontrado']);
+            return redirect()->back()->withErrors(['error' => 'Negocio no encontrado']);
         }
-
-        
 
         // Verificar que la sucursal pertenece al negocio
         $sucursal = Sucursal::where('id', $validated['sucursal_id'])
@@ -128,13 +126,17 @@ class UserController extends Controller
             ->first();
 
         if(!$sucursal){
-            return redirect()->back()->with(['error' => 'sucursal no encontrado']);
-
+            return redirect()->back()->withErrors(['error' => 'Sucursal no encontrada']);
         }
 
         // Generar prefix del negocio y concatenarlo al username
         $prefix = User::generateBusinessPrefix($negocioId);
         $username = "{$prefix}_{$validated['username']}";
+
+        // Verificar que el username completo no exista
+        if (User::where('username', $username)->exists()) {
+            return redirect()->back()->withErrors(['username' => 'Este nombre de usuario ya está en uso. Por favor elige otro.']);
+        }
 
         // Crear el usuario
         $usuario = User::create([
