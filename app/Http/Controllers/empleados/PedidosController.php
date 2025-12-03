@@ -167,6 +167,7 @@ class PedidosController extends Controller
             // 2. Crear el pedido
             $pedido = Pedido::create([
                 'folio' => $folio,
+                'user_id' => auth()->id(),
                 'cliente_id' => $validated['cliente_id'],
                 'created_by' => auth()->id(),
                 'sucursal_id' => $validated['sucursal_id'],

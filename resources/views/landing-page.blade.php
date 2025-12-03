@@ -449,8 +449,12 @@
                 </div>
             </div>
             
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2023 Nómada. Todos los derechos reservados.</p>
+            <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-gray-400">
+                <p>&copy; 2025 Nómada. Todos los derechos reservados.</p>
+                <button onclick="openPrivacyPolicy()" class="flex items-center gap-2 px-4 py-2 bg-[#1B1B1B] border border-gray-600 rounded-md hover:border-[#FC6F20] hover:text-[#FC6F20] transition-colors">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Política de Privacidad</span>
+                </button>
             </div>
         </div>
     </footer>
@@ -533,8 +537,104 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeGame();
+                closePrivacyPolicy();
             }
         });
+    </script>
+
+    <!-- Modal de Política de Privacidad -->
+    <div id="privacyModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex items-center justify-center p-2 md:p-4">
+        <div class="relative w-full max-w-4xl bg-[#323232] rounded-xl flex flex-col" style="height: 90vh; max-height: 90vh;">
+            <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                <h2 class="text-xl font-bold text-[#FC6F20]">Política de Privacidad</h2>
+                <button onclick="closePrivacyPolicy()" class="text-white text-2xl hover:text-[#FC6F20] transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4">
+                <p class="text-sm text-gray-400">Última actualización: 3 de Diciembre, 2025</p>
+                
+                <p>Esta Política de Privacidad describe nuestras políticas y procedimientos sobre la recopilación, uso y divulgación de su información cuando utiliza el Servicio y le informa sobre sus derechos de privacidad y cómo la ley lo protege.</p>
+                
+                <p>Utilizamos sus datos personales para proporcionar y mejorar el Servicio. Al utilizar el Servicio, usted acepta la recopilación y el uso de información de acuerdo con esta Política de Privacidad.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Interpretación y Definiciones</h3>
+                <p><strong>Cuenta:</strong> significa una cuenta única creada para que usted acceda a nuestro Servicio.</p>
+                <p><strong>Aplicación:</strong> se refiere a NOMADA, el programa de software proporcionado por la Compañía.</p>
+                <p><strong>Compañía:</strong> se refiere a NOMADA.</p>
+                <p><strong>Cookies:</strong> son pequeños archivos que se colocan en su computadora, dispositivo móvil o cualquier otro dispositivo por un sitio web.</p>
+                <p><strong>País:</strong> se refiere a México.</p>
+                <p><strong>Dispositivo:</strong> significa cualquier dispositivo que pueda acceder al Servicio.</p>
+                <p><strong>Datos Personales:</strong> es cualquier información que se relaciona con un individuo identificado o identificable.</p>
+                <p><strong>Servicio:</strong> se refiere a la Aplicación o el Sitio Web o ambos.</p>
+                <p><strong>Sitio Web:</strong> se refiere a NOMADA, accesible desde https://dev.yeremi.work/</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Tipos de Datos Recopilados</h3>
+                <h4 class="font-semibold text-[#FEE8D0]">Datos Personales</h4>
+                <p>Mientras utiliza nuestro Servicio, podemos pedirle que nos proporcione cierta información de identificación personal que puede usarse para contactarlo o identificarlo, incluyendo:</p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Dirección de correo electrónico</li>
+                    <li>Nombre y apellido</li>
+                    <li>Número de teléfono</li>
+                    <li>Dirección, Estado, Provincia, Código Postal, Ciudad</li>
+                    <li>Datos de uso</li>
+                </ul>
+
+                <h4 class="font-semibold text-[#FEE8D0] mt-4">Datos de Uso</h4>
+                <p>Los datos de uso se recopilan automáticamente cuando se utiliza el Servicio. Pueden incluir información como la dirección IP de su dispositivo, tipo de navegador, versión del navegador, las páginas de nuestro Servicio que visita, la hora y fecha de su visita, el tiempo dedicado a esas páginas e identificadores únicos del dispositivo.</p>
+
+                <h4 class="font-semibold text-[#FEE8D0] mt-4">Información de Ubicación</h4>
+                <p>Mientras usa nuestra Aplicación, podemos recopilar, con su permiso previo, información sobre su ubicación. Utilizamos esta información para proporcionar características de nuestro Servicio y para mejorar y personalizar nuestro Servicio.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Tecnologías de Seguimiento y Cookies</h3>
+                <p>Utilizamos Cookies y tecnologías de seguimiento similares para rastrear la actividad en nuestro Servicio y almacenar cierta información. Las cookies pueden ser "Persistentes" o de "Sesión".</p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li><strong>Cookies Necesarias/Esenciales:</strong> Estas cookies son esenciales para proporcionarle servicios disponibles a través del sitio web.</li>
+                    <li><strong>Cookies de Funcionalidad:</strong> Estas cookies nos permiten recordar las elecciones que hace cuando usa el sitio web.</li>
+                </ul>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Uso de Sus Datos Personales</h3>
+                <p>La Compañía puede usar los Datos Personales para los siguientes propósitos:</p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Para proporcionar y mantener nuestro Servicio</li>
+                    <li>Para gestionar su Cuenta</li>
+                    <li>Para el cumplimiento de un contrato</li>
+                    <li>Para contactarlo</li>
+                    <li>Para proporcionarle noticias, ofertas especiales e información general</li>
+                    <li>Para gestionar sus solicitudes</li>
+                </ul>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Retención de Sus Datos Personales</h3>
+                <p>La Compañía retendrá sus Datos Personales solo durante el tiempo que sea necesario para los fines establecidos en esta Política de Privacidad.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Seguridad de Sus Datos Personales</h3>
+                <p>La seguridad de sus Datos Personales es importante para nosotros, pero recuerde que ningún método de transmisión por Internet o método de almacenamiento electrónico es 100% seguro.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Privacidad de los Niños</h3>
+                <p>Nuestro Servicio no está dirigido a menores de 13 años. No recopilamos a sabiendas información de identificación personal de menores de 13 años.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Cambios a esta Política de Privacidad</h3>
+                <p>Podemos actualizar nuestra Política de Privacidad de vez en cuando. Le notificaremos cualquier cambio publicando la nueva Política de Privacidad en esta página.</p>
+
+                <h3 class="text-lg font-bold text-[#FEE8D0] mt-6">Contáctenos</h3>
+                <p>Si tiene alguna pregunta sobre esta Política de Privacidad, puede contactarnos:</p>
+                <p class="text-[#FC6F20]">Por correo electrónico: nomada@gmail.com</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPrivacyPolicy() {
+            const modal = document.getElementById('privacyModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePrivacyPolicy() {
+            const modal = document.getElementById('privacyModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
     </script>
 </body>
 </html>
