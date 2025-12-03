@@ -79,8 +79,9 @@ class SucursalController extends Controller
         ]);
 
         // Obtener el negocio una sola vez
-        $negocio = auth()->user()->negocio;
-        
+        $negocio = auth()->user()->negocio->first();
+        // dd($request->all(), $negocio);
+
         // Modificar el nombre para incluir el del negocio
         $nombreCompleto = $negocio->nombre . ' - ' . $validated['nombre'];
 
